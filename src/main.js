@@ -81,6 +81,7 @@ const appBar = require('./win32-appbar');
 const adblock = require('./adblock');
 
 const MIN_RAIL_WIDTH = 22;
+const DEFAULT_RAIL_WIDTH = 42;
 const MAX_RAIL_WIDTH = 160;
 const HANDLE_WIDTH = 4;
 const HANDLE_HEIGHT = 110;
@@ -118,7 +119,7 @@ let unreadSummary = {
 
 let uiWindowState = {
   mode: 'rail', // 'handle' | 'rail' | 'expanded'
-  railWidth: MIN_RAIL_WIDTH,
+  railWidth: DEFAULT_RAIL_WIDTH,
   panelWidth: 420,
   handleYRatio: 0.38,
   modalOpen: false,
@@ -186,7 +187,7 @@ function syncWindowMaterial() {
   if (!mainWindow || mainWindow.isDestroyed()) return;
   const { settings } = store.get();
   const dark = isEffectiveDark(settings);
-  appBar.applyBackdropMaterial(mainWindow, settings.material || 'acrylic', dark, false);
+  appBar.applyBackdropMaterial(mainWindow, settings.material || 'none', dark, false);
 }
 
 function setExactBoundsWithResync(display, dipBounds) {
@@ -565,8 +566,8 @@ function applyWindowGeometryInner() {
     } catch {}
   };
 
-  // 2) Şerit Modu (minimum 22px, isteğe bağlı genişletilebilir) veya Açık Panel (panelWidth + railWidth)
-  const rWidth = clamp(uiWindowState.railWidth || settings.railWidth || MIN_RAIL_WIDTH, MIN_RAIL_WIDTH, MAX_RAIL_WIDTH);
+  // 2) Şerit Modu (varsayılan 42px, 22-160px arası genişletilebilir) veya Açık Panel (panelWidth + railWidth)
+  const rWidth = clamp(uiWindowState.railWidth || settings.railWidth || DEFAULT_RAIL_WIDTH, MIN_RAIL_WIDTH, MAX_RAIL_WIDTH);
   const maxPanel = Math.max(280, Math.floor(display.bounds.width * 0.78) - rWidth);
   const pWidth = clamp(uiWindowState.panelWidth || settings.panelWidth || 420, 280, maxPanel);
   const totalWidth = mode === 'expanded' ? (pWidth + rWidth) : rWidth;
@@ -1067,7 +1068,7 @@ function createMainWindow() {
     }
   });
 
-  uiWindowState.railWidth = clamp(settings.railWidth || MIN_RAIL_WIDTH, MIN_RAIL_WIDTH, MAX_RAIL_WIDTH);
+  uiWindowState.railWidth = clamp(settings.railWidth || DEFAULT_RAIL_WIDTH, MIN_RAIL_WIDTH, MAX_RAIL_WIDTH);
   uiWindowState.panelWidth = settings.panelWidth || 420;
   uiWindowState.handleYRatio = settings.handleYRatio ?? 0.38;
   uiWindowState.mode = settings.autoHide ? 'handle' : 'rail';
@@ -2515,8 +2516,8 @@ ipcMain.handle('sidebar:rail-context-menu', () => {
         click: () => done('cycle-glass-tint')
       },
       {
-        label: 'Şerit Genişliğini Sıfırla (Min: 22px)',
-        enabled: (settings.railWidth || MIN_RAIL_WIDTH) > MIN_RAIL_WIDTH,
+        label: `Şerit Genişliğini Sıfırla (${DEFAULT_RAIL_WIDTH}px)`,
+        enabled: (settings.railWidth || DEFAULT_RAIL_WIDTH) !== DEFAULT_RAIL_WIDTH,
         click: () => done('reset-rail-width')
       },
       {

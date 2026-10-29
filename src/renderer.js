@@ -435,6 +435,10 @@
       btnRailWorkspace.classList.toggle('filtered', curWs.id !== 'all');
       btnRailWorkspace.title = `Çalışma Alanı: ${curWs.name}\n(Sol Tık: Sonraki Profil | Sağ Tık: Profil Seç)`;
     }
+    const railTopEl = document.querySelector('.rail-top');
+    if (railTopEl) {
+      railTopEl.classList.toggle('hidden', curWs.id === 'all');
+    }
 
     if (workspaceFilterBar) {
       workspaceFilterBar.innerHTML = '';
@@ -458,22 +462,133 @@
     showToast(`Çalışma Alanı: ${target.badge} ${target.name}`);
   }
 
+  function buildCleanFolderSvg(siteLike) {
+    const rawBg = String(siteLike?.iconBg || '');
+    const hexes = rawBg.match(/#[0-9a-fA-F]{6}/g) || [];
+    let c1 = (hexes[0] || '#FBBF24').toLowerCase();
+    let c2 = (hexes[1] || hexes[0] || '#D97706').toLowerCase();
+
+    // Koyu antrasit (#334155 / #1e293b) şerit üzerinde net görünmesi için gümüş-mavi tona aydınlat
+    if (c1 === '#334155' || c1 === '#1e293b') {
+      c1 = '#94a3b8';
+      c2 = '#64748b';
+    } else if (c1 === '#f59e0b' && c2 === '#d97706') {
+      c1 = '#fbbf24';
+      c2 = '#d97706';
+    }
+
+    const gradId = `zf-${c1.slice(1)}-${c2.slice(1)}`;
+    const hint = `${siteLike?.name || ''} ${siteLike?.folderPath || ''}`.toLowerCase();
+    let glyph = '';
+    if (/download|indirilen/.test(hint)) {
+      glyph = '<path d="M12 10.7v4.6m0 0-2-2m2 2 2-2" stroke="rgba(255,255,255,0.9)" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round"/>';
+    } else if (/desktop|masaüstü|masaustu/.test(hint)) {
+      glyph = '<rect x="8.6" y="10.8" width="6.8" height="4.4" rx="1" stroke="rgba(255,255,255,0.88)" stroke-width="1.4"/><line x1="10.4" y1="16.7" x2="13.6" y2="16.7" stroke="rgba(255,255,255,0.88)" stroke-width="1.4" stroke-linecap="round"/>';
+    } else if (/document|belge/.test(hint)) {
+      glyph = '<line x1="8.8" y1="12.1" x2="15.2" y2="12.1" stroke="rgba(255,255,255,0.88)" stroke-width="1.45" stroke-linecap="round"/><line x1="8.8" y1="14.9" x2="13.2" y2="14.9" stroke="rgba(255,255,255,0.88)" stroke-width="1.45" stroke-linecap="round"/>';
+    } else if (/oyun|game/.test(hint)) {
+      glyph = '<path d="M9.1 13.5h2.4M10.3 12.3v2.4" stroke="rgba(255,255,255,0.9)" stroke-width="1.45" stroke-linecap="round"/><circle cx="14.1" cy="12.7" r="0.8" fill="rgba(255,255,255,0.9)"/><circle cx="15.4" cy="14.2" r="0.8" fill="rgba(255,255,255,0.9)"/>';
+    }
+
+    return `<svg viewBox="0 0 24 24" fill="none"><defs><linearGradient id="${gradId}" x1="3" y1="7" x2="21" y2="20" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="${c1}"/><stop offset="100%" stop-color="${c2}"/></linearGradient></defs><path fill="${c2}" d="M3 6.5A2.5 2.5 0 0 1 5.5 4h3.9c.7 0 1.36.3 1.83.82l1.22 1.36c.28.31.68.49 1.1.49h4.95A2.5 2.5 0 0 1 21 9.17v8.33A2.5 2.5 0 0 1 18.5 20h-13A2.5 2.5 0 0 1 3 17.5v-11Z"/><path fill="url(#${gradId})" d="M3 9.2A2 2 0 0 1 5 7.2h14a2 2 0 0 1 2 2v8.3a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5V9.2Z"/>${glyph}</svg>`;
+  }
+
+  function resolveBrandIconKey(siteLike) {
+    if (!siteLike) return null;
+    if (isFolderItem(siteLike)) {
+      const t = siteLike.iconType || 'preset';
+      if (t === 'favicon' || (t === 'preset' && (!siteLike.iconValue || siteLike.iconValue === 'folder'))) {
+        return 'folder';
+      }
+      return null;
+    }
+
+    const rawType = siteLike.iconType || 'favicon';
+    const allowDomainMatch =
+      rawType === 'favicon' ||
+      (rawType === 'preset' && siteLike.iconValue === 'translate');
+    if (!allowDomainMatch) return null;
+
+    let host = '';
+    try {
+      const rawUrl = String(siteLike.url || '').trim();
+      if (rawUrl) {
+        const parsed = new URL(/^https?:\/\//i.test(rawUrl) ? rawUrl : `https://${rawUrl}`);
+        host = parsed.hostname.toLowerCase();
+      }
+    } catch {
+      host = String(siteLike.url || '').toLowerCase();
+    }
+    if (!host) return null;
+
+    if (host.includes('whatsapp.com')) return 'whatsapp';
+    if (host.includes('perplexity.ai')) return 'perplexity';
+    if (host.includes('chatgpt.com') || host.includes('openai.com')) return 'chatgpt';
+    if (host.includes('claude.ai')) return 'claude';
+    if (host.includes('gemini.google.')) return 'gemini';
+    if (host.includes('copilot.microsoft.com')) return 'copilot';
+    if (host.includes('mail.google.')) return 'gmail';
+    if (host.includes('translate.google.')) return 'translate';
+    if (host.includes('to-do.live.com') || host.includes('todo.microsoft.com')) return 'todo';
+    if (host.includes('youtube.com') || host.includes('youtu.be')) return 'youtube';
+    if (host.includes('telegram.org')) return 'telegram';
+    if (host.includes('spotify.com')) return 'spotify';
+    if (host.includes('github.com')) return 'github';
+    if (/^(www\.)?google\.[a-z.]+$/.test(host)) return 'google';
+    return null;
+  }
+
   function renderIconInto(el, siteLike) {
     el.innerHTML = '';
+    el.style.background = 'transparent';
+    el.style.color = 'var(--text-primary)';
+
     const rawType = siteLike.iconType || (isFolderItem(siteLike) ? 'preset' : 'favicon');
     const type = (isFolderItem(siteLike) && rawType === 'favicon') ? 'preset' : rawType;
     const iconVal = (isFolderItem(siteLike) && type === 'preset' && !siteLike.iconValue)
       ? 'folder'
       : siteLike.iconValue;
-    const bg = siteLike.iconBg || (isFolderItem(siteLike)
-      ? 'linear-gradient(135deg, #f59e0b, #d97706)'
-      : 'rgba(255, 255, 255, 0.08)');
+
+    if (type === 'custom' && siteLike.iconValue) {
+      const img = document.createElement('img');
+      img.src = siteLike.iconValue;
+      img.alt = siteLike.name || '';
+      img.onerror = () => {
+        el.innerHTML = '';
+        const span = document.createElement('span');
+        span.className = 'monogram-label';
+        span.textContent = getMonogramFallback(siteLike.name);
+        el.appendChild(span);
+      };
+      el.appendChild(img);
+      return;
+    }
+
+    if (type === 'monogram') {
+      const span = document.createElement('span');
+      span.className = 'monogram-label';
+      span.textContent = (siteLike.iconValue || getMonogramFallback(siteLike.name)).slice(0, 4);
+      el.appendChild(span);
+      return;
+    }
+
+    const brandKey = resolveBrandIconKey(siteLike);
+    if (brandKey === 'folder') {
+      el.innerHTML = buildCleanFolderSvg(siteLike);
+      return;
+    }
+    if (brandKey && window.SIDEBAR_PRESETS.brandIcons && window.SIDEBAR_PRESETS.brandIcons[brandKey]) {
+      el.innerHTML = window.SIDEBAR_PRESETS.brandIcons[brandKey];
+      return;
+    }
+
+    if (type === 'preset') {
+      const svg = window.SIDEBAR_PRESETS.icons[iconVal] || window.SIDEBAR_PRESETS.icons.globe;
+      el.innerHTML = svg;
+      return;
+    }
 
     if (type === 'favicon') {
-      el.style.background = siteLike.iconBg && siteLike.iconBg !== 'rgba(255, 255, 255, 0.09)'
-        ? siteLike.iconBg
-        : '';
-      el.style.color = '#ffffff';
       const favSrc = siteLike.cachedFavicon || getGoogleFaviconUrl(siteLike.url);
       if (favSrc) {
         const img = document.createElement('img');
@@ -491,32 +606,6 @@
       }
     }
 
-    if (type === 'preset') {
-      el.style.background = bg;
-      el.style.color = '#ffffff';
-      const svg = window.SIDEBAR_PRESETS.icons[iconVal] || window.SIDEBAR_PRESETS.icons.globe;
-      el.innerHTML = svg;
-      return;
-    }
-
-    if (type === 'custom' && siteLike.iconValue) {
-      el.style.background = bg;
-      const img = document.createElement('img');
-      img.src = siteLike.iconValue;
-      img.alt = siteLike.name || '';
-      img.onerror = () => {
-        el.innerHTML = '';
-        const span = document.createElement('span');
-        span.className = 'monogram-label';
-        span.textContent = getMonogramFallback(siteLike.name);
-        el.appendChild(span);
-      };
-      el.appendChild(img);
-      return;
-    }
-
-    el.style.background = bg;
-    el.style.color = '#ffffff';
     const span = document.createElement('span');
     span.className = 'monogram-label';
     span.textContent = (siteLike.iconValue || getMonogramFallback(siteLike.name)).slice(0, 4);
@@ -526,12 +615,12 @@
   // ==================== TEMA, MICA/CAM, KENAR VE PENCERE DURUMU ====================
 
   function getClampedRailWidth() {
-    return Math.max(22, Math.min(160, Number(config.settings.railWidth) || 22));
+    return Math.max(22, Math.min(160, Number(config.settings.railWidth) || 42));
   }
 
   function applyThemeAndEdge() {
-    const material = config.settings.material || 'acrylic';
-    const glassTint = config.settings.glassTint || 'ios-crystal';
+    const material = config.settings.material || 'none';
+    const glassTint = config.settings.glassTint || 'zen-clean';
     document.documentElement.setAttribute('data-material', material);
     document.documentElement.setAttribute('data-tint', glassTint);
 
@@ -552,7 +641,7 @@
 
     const dispMode = ['text', 'icon', 'both'].includes(config.settings.railDisplayMode)
       ? config.settings.railDisplayMode
-      : 'text';
+      : 'icon';
     body.classList.toggle('display-text', dispMode === 'text');
     body.classList.toggle('display-icon', dispMode === 'icon');
     body.classList.toggle('display-both', dispMode === 'both');
@@ -2132,10 +2221,10 @@
     railResizeGrip.addEventListener('dblclick', async (e) => {
       e.preventDefault();
       e.stopPropagation();
-      config = await window.sidebarAPI.updateSettings({ railWidth: 22 });
+      config = await window.sidebarAPI.updateSettings({ railWidth: 42 });
       applyThemeAndEdge();
       await syncWindowMode();
-      showToast('Şerit minimum genişliğe (22px) sıfırlandı');
+      showToast('Şerit varsayılan genişliğe (42px) sıfırlandı');
     });
   }
 
@@ -2363,7 +2452,9 @@
     const curIdx = tints.findIndex((t) => t.id === curId);
     const nextTint = tints[(curIdx + 1) % tints.length];
     const patch = { glassTint: nextTint.id };
-    if (config.settings.material === 'none') {
+    if (nextTint.id === 'zen-clean') {
+      patch.material = 'none';
+    } else if (config.settings.material === 'none') {
       patch.material = 'acrylic';
     }
     config = await window.sidebarAPI.updateSettings(patch);
@@ -2394,10 +2485,10 @@
     else if (action === 'toggle-autohide') btnRailAutohide.click();
     else if (action === 'cycle-glass-tint') await cycleGlassTintOrMaterial(false);
     else if (action === 'reset-rail-width') {
-      config = await window.sidebarAPI.updateSettings({ railWidth: 22 });
+      config = await window.sidebarAPI.updateSettings({ railWidth: 42 });
       applyThemeAndEdge();
       await syncWindowMode();
-      showToast('Şerit genişliği 22px olarak sıfırlandı');
+      showToast('Şerit genişliği 42px olarak sıfırlandı');
     } else if (action === 'flip-edge') {
       const nextEdge = config.settings.edge === 'left' ? 'right' : 'left';
       config = await window.sidebarAPI.updateSettings({ edge: nextEdge });
@@ -2566,12 +2657,14 @@
 
         card.addEventListener('click', async () => {
           const patch = { glassTint: tint.id };
-          if (config.settings.material === 'none') {
+          if (tint.id === 'zen-clean') {
+            patch.material = 'none';
+          } else if (config.settings.material === 'none') {
             patch.material = 'acrylic';
           }
           config = await window.sidebarAPI.updateSettings(patch);
           applyThemeAndEdge();
-          showToast(`Cam Rengi: ${tint.name}`);
+          showToast(`Görünüm Paleti: ${tint.name}`);
         });
 
         glassTintGrid.appendChild(card);
@@ -3244,7 +3337,7 @@
 
   if (setRailWidth) {
     setRailWidth.addEventListener('input', () => {
-      const nextRailW = Math.max(22, Math.min(160, Number(setRailWidth.value) || 22));
+      const nextRailW = Math.max(22, Math.min(160, Number(setRailWidth.value) || 42));
       config.settings.railWidth = nextRailW;
       body.style.setProperty('--rail-w', `${nextRailW}px`);
       body.classList.toggle('wide-rail', nextRailW >= 58);
@@ -3264,7 +3357,7 @@
     });
 
     setRailWidth.addEventListener('change', async () => {
-      const nextRailW = Math.max(22, Math.min(160, Number(setRailWidth.value) || 22));
+      const nextRailW = Math.max(22, Math.min(160, Number(setRailWidth.value) || 42));
       config = await window.sidebarAPI.updateSettings({ railWidth: nextRailW });
       applyThemeAndEdge();
       await syncWindowMode();

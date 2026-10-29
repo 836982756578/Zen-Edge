@@ -1,14 +1,24 @@
 :root {
-  --rail-w: 22px;
-  --tint-1: 56, 189, 248;
-  --tint-2: 129, 140, 248;
-  --tint-base-dark: 16, 23, 38;
-  --tint-base-light: 242, 246, 253;
+  --rail-w: 42px;
+  --tint-1: 96, 165, 250;
+  --tint-2: 71, 85, 105;
+  --tint-base-dark: 50, 50, 50;
+  --tint-base-light: 243, 243, 243;
   --mat-alpha: 0.44;
-  --glass-highlight: inset 1px 1px 0 rgba(255, 255, 255, 0.16), inset 0 -1px 0 rgba(255, 255, 255, 0.05);
+  --glass-highlight: none;
 }
 
-/* ==================== iOS CAM & WINDOWS 11 MICA RENK PALETLERİ ==================== */
+/* ==================== ZEN SADE ANTRASİT & iOS CAM / MICA RENK PALETLERİ ==================== */
+html[data-tint="zen-clean"] {
+  --tint-1: 96, 165, 250;
+  --tint-2: 71, 85, 105;
+  --tint-base-dark: 50, 50, 50;
+  --tint-base-light: 243, 243, 243;
+  --accent: #3b82f6;
+  --accent-glow: #60a5fa;
+  --accent-hover: #2563eb;
+}
+
 html[data-tint="ios-crystal"] {
   --tint-1: 56, 189, 248;
   --tint-2: 129, 140, 248;
@@ -158,6 +168,42 @@ html[data-theme="light"] {
   --glass-highlight: inset 1px 1px 0 rgba(255, 255, 255, 0.78), inset 0 -1px 0 rgba(15, 23, 42, 0.06);
 }
 
+/* Zen Sade Antrasit (#323232) Düz, Çerçevesiz, Minimalist Tema Yüzeyleri */
+html[data-theme="dark"][data-tint="zen-clean"] {
+  --bg-rail: rgba(50, 50, 50, var(--mat-alpha));
+  --bg-drawer: rgba(35, 35, 35, calc(var(--mat-alpha) + 0.04));
+  --bg-header: rgba(43, 43, 43, calc(var(--mat-alpha) + 0.04));
+  --bg-card: rgba(46, 46, 46, 0.88);
+  --bg-card-hover: rgba(255, 255, 255, 0.08);
+  --bg-input: rgba(28, 28, 28, 0.88);
+  --border-subtle: rgba(255, 255, 255, 0.07);
+  --border-strong: rgba(255, 255, 255, 0.16);
+  --icon-tile-bg: rgba(255, 255, 255, 0.06);
+  --icon-tile-hover: rgba(255, 255, 255, 0.11);
+  --glass-highlight: none;
+}
+
+html[data-theme="dark"][data-tint="zen-clean"][data-material="none"] {
+  --bg-rail: #323232;
+  --bg-drawer: #232323;
+  --bg-header: #2b2b2b;
+}
+
+html[data-theme="light"][data-tint="zen-clean"] {
+  --bg-rail: rgba(243, 243, 243, var(--mat-alpha));
+  --bg-drawer: rgba(250, 250, 250, calc(var(--mat-alpha) + 0.04));
+  --bg-header: rgba(245, 245, 245, calc(var(--mat-alpha) + 0.04));
+  --border-subtle: rgba(0, 0, 0, 0.08);
+  --border-strong: rgba(0, 0, 0, 0.16);
+  --glass-highlight: none;
+}
+
+html[data-theme="light"][data-tint="zen-clean"][data-material="none"] {
+  --bg-rail: #f3f3f3;
+  --bg-drawer: #fafafa;
+  --bg-header: #f5f5f5;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -288,10 +334,10 @@ body.is-rail-resizing webview {
   pointer-events: none !important;
 }
 
-/* ==================== 3) İNCE İSİM SEKMELERİ ŞERİDİ (Min 22px -> 160px) ==================== */
+/* ==================== 3) SADE VE TEMİZ SEKME ŞERİDİ (Varsayılan 42px, 22-160px) ==================== */
 #sidebar-rail {
   position: relative;
-  width: var(--rail-w, 22px);
+  width: var(--rail-w, 42px);
   min-width: 22px;
   max-width: 160px;
   height: 100%;
@@ -300,7 +346,7 @@ body.is-rail-resizing webview {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 4px 0 6px;
+  padding: 10px 0 8px;
   z-index: 20;
   border-left: 1px solid var(--border-subtle);
 }
@@ -349,11 +395,16 @@ body.is-rail-resizing #rail-resize-grip {
   flex-direction: column;
   align-items: center;
   width: 100%;
-  gap: 3px;
+  gap: 4px;
+}
+
+body.display-icon #btn-rail-brand,
+body.display-icon .rail-top .rail-divider {
+  display: none;
 }
 
 .rail-divider {
-  width: calc(100% - 8px);
+  width: calc(100% - 12px);
   max-width: 120px;
   height: 1px;
   background: var(--border-subtle);
@@ -397,7 +448,7 @@ body.mode-expanded.edge-left .rail-brand-btn svg {
   background: var(--icon-tile-hover);
 }
 
-/* Dikey / Yatay Uyarlanabilir Defter Ayracı Sekme Listesi */
+/* Çerçevesiz, Kutusuz, Sade ve Temiz Sekme Listesi */
 .rail-apps-list {
   flex: 1;
   width: 100%;
@@ -405,13 +456,13 @@ body.mode-expanded.edge-left .rail-brand-btn svg {
   overflow-x: hidden;
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
-  gap: 4px;
-  padding: 4px 0;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 0;
 }
 
 body.edge-left .rail-apps-list {
-  align-items: flex-start;
+  align-items: center;
 }
 
 .rail-apps-list::-webkit-scrollbar {
@@ -420,32 +471,28 @@ body.edge-left .rail-apps-list {
 
 .rail-item {
   position: relative;
-  width: calc(100% - 2px);
-  min-height: 42px;
-  padding: 8px 0;
-  border-radius: 6px 0 0 6px;
+  width: calc(100% - 6px);
+  min-height: 36px;
+  padding: 6px 0;
+  border-radius: 8px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 4px;
   cursor: pointer;
-  background: var(--icon-tile-bg);
-  border: 1px solid var(--border-subtle);
-  border-right: none;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.10);
-  transition: background 0.14s ease, border-color 0.14s ease, color 0.14s ease;
-}
-
-body.edge-left .rail-item {
-  border-radius: 0 6px 6px 0;
-  border-right: 1px solid var(--border-subtle);
-  border-left: none;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  transition: background 0.14s ease, color 0.14s ease;
 }
 
 .rail-item:hover {
-  background: var(--icon-tile-hover);
-  border-color: var(--border-strong);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+html[data-theme="light"] .rail-item:hover {
+  background: rgba(15, 23, 42, 0.07);
 }
 
 .rail-item:hover .tab-title-text {
@@ -453,8 +500,11 @@ body.edge-left .rail-item {
 }
 
 .rail-item.active {
-  background: var(--accent-soft);
-  border-color: var(--accent-glow);
+  background: rgba(255, 255, 255, 0.13);
+}
+
+html[data-theme="light"] .rail-item.active {
+  background: rgba(15, 23, 42, 0.10);
 }
 
 .rail-item.active .tab-title-text {
@@ -462,41 +512,37 @@ body.edge-left .rail-item {
   font-weight: 700;
 }
 
-/* Okunmamış Bildirim Vurgusu (WhatsApp vb. bildirim geldiğinde başlıkta ve sekmede parlak vurgu) */
-.rail-item.has-unread {
-  border-color: rgba(16, 185, 129, 0.85);
-  background: linear-gradient(180deg, rgba(16, 185, 129, 0.25), rgba(5, 150, 105, 0.14));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 0 10px rgba(16, 185, 129, 0.22);
-}
-
+/* Okunmamış Bildirim Vurgusu (Simgenin arkasını kutuya boyamadan sadece temiz rozet gösterir) */
 .rail-item.has-unread .tab-title-text {
-  color: #ffffff;
+  color: #34d399;
   font-weight: 700;
 }
 
 html[data-theme="light"] .rail-item.has-unread .tab-title-text {
-  color: #064e3b;
+  color: #059669;
 }
 
-/* Otomatik Uyku Modundaki Sekme Görünümü */
+/* Uyku modundaki sekmeler şeritte soluklaşmaz — her simge canlı ve temiz kalır */
 .rail-item.is-sleeping {
-  opacity: 0.72;
-}
-
-.rail-item.is-sleeping:hover {
   opacity: 1;
 }
 
-/* Sekme Sol/Sağ İnce Renkli Vurgu Çizgisi */
+/* Sekme Sol/Sağ İnce Vurgu Çizgisi (Yalnızca aktif açık sekmede görünür) */
 .tab-accent-bar {
   position: absolute;
   left: 0;
-  top: 5px;
-  bottom: 5px;
+  top: 8px;
+  bottom: 8px;
   width: 2.5px;
   border-radius: 99px;
   background: var(--accent-glow);
+  opacity: 0;
+  transition: opacity 0.14s ease;
   pointer-events: none;
+}
+
+.rail-item.active .tab-accent-bar {
+  opacity: 1;
 }
 
 body.edge-left .tab-accent-bar {
@@ -519,86 +565,57 @@ body.edge-left .tab-accent-bar {
   font-weight: 800;
   line-height: 1;
   letter-spacing: -0.02em;
-  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.55);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
   flex-shrink: 0;
   pointer-events: none;
 }
 
-/* Arka planda açık (bellekte hazır) / Ses çalan / Uyku modunda mikro durum noktası */
+/* Durum noktası yalnızca arka planda aktif ses çalan sekmede gösterilir (gereksiz mavi/sarı noktalar gizli) */
 .tab-live-dot {
-  display: none;
-  width: 4.5px;
-  height: 4.5px;
-  min-width: 4.5px;
-  min-height: 4.5px;
+  display: none !important;
+  width: 5px;
+  height: 5px;
+  min-width: 5px;
+  min-height: 5px;
   border-radius: 50%;
-  background: var(--accent-glow);
+  background: #10b981;
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.85);
   flex-shrink: 0;
   pointer-events: none;
 }
 
-.rail-item.is-loaded .tab-live-dot {
-  display: block;
+.rail-item.is-audible:not(.is-muted):not(.has-unread) .tab-live-dot {
+  display: block !important;
 }
 
-.rail-item.is-sleeping .tab-live-dot {
-  display: block;
-  background: #f59e0b;
-  opacity: 0.85;
-}
-
-.rail-item.is-audible .tab-live-dot {
-  display: block;
-  width: 5.5px;
-  height: 5.5px;
-  background: #10b981;
-  box-shadow: 0 0 6px rgba(16, 185, 129, 0.9);
-}
-
-.rail-item.is-muted .tab-live-dot {
-  display: block;
-  background: #ef4444;
-}
-
-.rail-item.has-unread .tab-live-dot {
-  display: none;
-}
-
-/* Sekme İkon Kutusu (Sadece Simge ve Simge + İsim Modları İçin) */
+/* Çerçevesiz Tam Boyutlu Sekme Simgesi */
 .tab-icon-box {
-  width: clamp(16px, calc(var(--rail-w, 22px) - 7px), 30px);
-  height: clamp(16px, calc(var(--rail-w, 22px) - 7px), 30px);
-  border-radius: 7px;
+  width: clamp(16px, calc(var(--rail-w, 42px) - 20px), 24px);
+  height: clamp(16px, calc(var(--rail-w, 42px) - 20px), 24px);
+  border-radius: 0;
+  background: transparent !important;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  overflow: hidden;
+  overflow: visible;
   pointer-events: none;
 }
 
-.tab-icon-box img {
-  width: 72%;
-  height: 72%;
-  min-width: 12px;
-  min-height: 12px;
-  max-width: 21px;
-  max-height: 21px;
+.tab-icon-box img,
+.tab-icon-box svg {
+  width: 100%;
+  height: 100%;
+  min-width: 14px;
+  min-height: 14px;
+  max-width: none;
+  max-height: none;
   object-fit: contain;
   border-radius: 4px;
 }
 
-.tab-icon-box svg {
-  width: 64%;
-  height: 64%;
-  min-width: 11px;
-  min-height: 11px;
-  max-width: 19px;
-  max-height: 19px;
-}
-
 .tab-icon-box .monogram-label {
-  font-size: clamp(9px, calc(var(--rail-w, 22px) * 0.30), 12px);
+  font-size: clamp(10px, calc(var(--rail-w, 42px) * 0.34), 14px);
   font-weight: 700;
   letter-spacing: -0.02em;
   line-height: 1;
@@ -608,7 +625,7 @@ body.edge-left .tab-accent-bar {
 .tab-title-text {
   writing-mode: vertical-rl;
   text-orientation: mixed;
-  font-size: clamp(10.5px, calc(var(--rail-w, 22px) * 0.34), 12.5px);
+  font-size: clamp(10.5px, calc(var(--rail-w, 42px) * 0.30), 12.5px);
   font-weight: 600;
   letter-spacing: 0.03em;
   line-height: 1;
@@ -624,70 +641,67 @@ body.edge-left .tab-title-text {
   transform: rotate(180deg);
 }
 
-/* ==================== SEKME GÖRÜNÜM MODLARI (SADECE İSİM / SADECE SİMGE / SİMGE + İSİM) ==================== */
+/* ==================== SEKME GÖRÜNÜM MODLARI (SADECE SİMGE [VARSAYILAN] / İSİM / SİMGE + İSİM) ==================== */
 
-/* 1) Sadece İsim (Varsayılan) */
+/* 1) Sadece İsim */
 body.display-text .tab-icon-box {
   display: none;
 }
 
-/* 2) Sadece Simge */
+/* 2) Sadece Simge (Varsayılan — Sade ve Temiz Görünüm) */
 body.display-icon .tab-title-text {
   display: none;
 }
 
 body.display-icon .rail-item {
-  min-height: clamp(26px, calc(var(--rail-w, 22px) + 2px), 44px);
-  padding: 4px 0;
-  gap: 2px;
+  width: clamp(24px, calc(var(--rail-w, 42px) - 8px), 36px);
+  height: clamp(24px, calc(var(--rail-w, 42px) - 8px), 36px);
+  min-height: clamp(24px, calc(var(--rail-w, 42px) - 8px), 36px);
+  padding: 0;
+  gap: 0;
 }
 
 body.display-icon .tab-unread-badge {
   position: absolute;
-  top: 1px;
-  right: 1px;
+  top: 0;
+  right: 0;
   z-index: 5;
-  min-width: 13px;
-  height: 13px;
-  padding: 0 3px;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 3.5px;
   font-size: 9px;
 }
 
 body.display-icon.edge-left .tab-unread-badge {
   right: auto;
-  left: 1px;
+  left: 0;
 }
 
 body.display-icon .tab-live-dot {
   position: absolute;
   bottom: 2px;
-  right: 3px;
+  right: 2px;
 }
 
 body.display-icon.edge-left .tab-live-dot {
   right: auto;
-  left: 3px;
+  left: 2px;
 }
 
 /* 3) Simge + İsim */
 body.display-both .tab-icon-box {
-  width: clamp(15px, calc(var(--rail-w, 22px) - 8px), 22px);
-  height: clamp(15px, calc(var(--rail-w, 22px) - 8px), 22px);
-  border-radius: 5px;
+  width: clamp(16px, calc(var(--rail-w, 42px) - 18px), 20px);
+  height: clamp(16px, calc(var(--rail-w, 42px) - 18px), 20px);
 }
 
 /* Şerit 58px ve üzerine genişletildiğinde otomatik Yatay İnce Sekme Görünümü (Sadece İsim & Simge + İsim) */
 body.wide-rail:not(.display-icon) .rail-item {
-  width: calc(100% - 4px);
-  min-height: 30px;
-  padding: 5px 6px 5px 9px;
+  width: calc(100% - 8px);
+  min-height: 32px;
+  padding: 5px 8px;
   flex-direction: row;
   justify-content: flex-start;
-  gap: 6px;
-}
-
-body.wide-rail:not(.display-icon).edge-left .rail-item {
-  padding: 5px 9px 5px 6px;
+  gap: 7px;
 }
 
 body.wide-rail:not(.display-icon) .tab-title-text {
@@ -701,8 +715,8 @@ body.wide-rail:not(.display-icon) .tab-title-text {
 }
 
 body.wide-rail.display-both .tab-icon-box {
-  width: 20px;
-  height: 20px;
+  width: 19px;
+  height: 19px;
 }
 
 body.wide-rail .rail-bottom {
@@ -726,7 +740,8 @@ body.wide-rail .rail-bottom {
   pointer-events: none;
 }
 
-.rail-icon-preview svg {
+.rail-icon-preview svg,
+.mini-badge svg {
   width: 18px;
   height: 18px;
   pointer-events: none;
@@ -740,55 +755,67 @@ body.wide-rail .rail-bottom {
   pointer-events: none;
 }
 
+/* Alt Minimalist Yardımcı Kontroller (Gereksiz kalabalık yapan ekstra butonlar şeritte gizli, Ayarlar & Sağ Tık'ta hazır) */
+#btn-rail-display,
+#btn-rail-glass,
+#btn-rail-dock,
+#btn-rail-autohide,
+.rail-bottom .rail-divider {
+  display: none;
+}
+
 .rail-add-wrap {
-  padding: 3px 0 2px;
+  padding: 4px 0 2px;
 }
 
 .rail-action-btn,
 .rail-util-btn {
-  width: 18px;
-  height: 22px;
-  border-radius: 4px;
-  border: 1px solid transparent;
+  width: clamp(22px, calc(var(--rail-w, 42px) - 12px), 32px);
+  height: clamp(22px, calc(var(--rail-w, 42px) - 12px), 32px);
+  border-radius: 7px;
+  border: none;
   background: transparent;
   color: var(--text-secondary);
+  opacity: 0.48;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.14s ease;
+  transition: opacity 0.14s ease, background 0.14s ease, color 0.14s ease;
 }
 
 .rail-action-btn.add-accent {
-  background: var(--icon-tile-bg);
-  color: var(--text-primary);
-  border-color: var(--border-subtle);
+  background: transparent;
+  color: var(--text-secondary);
 }
 
-.rail-action-btn.add-accent:hover {
-  background: var(--accent);
-  color: #ffffff;
-  border-color: var(--accent);
-}
-
+.rail-action-btn:hover,
+.rail-action-btn.add-accent:hover,
 .rail-util-btn:hover {
-  background: var(--icon-tile-hover);
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.08);
   color: var(--text-primary);
+}
+
+html[data-theme="light"] .rail-action-btn:hover,
+html[data-theme="light"] .rail-action-btn.add-accent:hover,
+html[data-theme="light"] .rail-util-btn:hover {
+  background: rgba(15, 23, 42, 0.07);
 }
 
 .rail-util-btn.active {
-  background: var(--accent-soft);
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.12);
   color: var(--accent-glow);
-  border-color: rgba(14, 165, 233, 0.35);
 }
 
 .rail-action-btn svg,
 .rail-util-btn svg {
-  width: 12.5px;
-  height: 12.5px;
+  width: 15px;
+  height: 15px;
   fill: none;
   stroke: currentColor;
-  stroke-width: 2;
+  stroke-width: 1.85;
   stroke-linecap: round;
   stroke-linejoin: round;
 }

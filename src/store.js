@@ -49,15 +49,15 @@ const DEFAULT_WIDGETS = {
 };
 
 const DEFAULT_CONFIG = {
-  configVersion: 6,
+  configVersion: 7,
   settings: {
     edge: 'right',            // 'right' | 'left'
     displayId: null,          // Hedef monitör ID (null = Ana Ekran)
     activeWorkspace: 'all',   // 'all' | 'general' | 'ai' | 'work' | 'personal'
     theme: 'dark',            // 'dark' | 'light' | 'system'
-    material: 'acrylic',      // 'mica' (Win11 Mica) | 'acrylic' (iOS Buzlu Cam) | 'tabbed' (Mica Alt) | 'none' (Mat)
-    glassTint: 'ios-crystal', // 'ios-crystal' | 'mica-ocean' | 'ios-aurora' | 'ios-emerald' | 'ios-rose' | 'ios-sunset' | 'ios-midnight' | 'ios-pearl'
-    railDisplayMode: 'text',  // 'text' (Sadece İsim) | 'icon' (Sadece Simge) | 'both' (Simge + İsim)
+    material: 'none',         // 'none' (Zen Sade #323232 Mat) | 'mica' | 'acrylic' | 'tabbed'
+    glassTint: 'zen-clean',   // 'zen-clean' | 'ios-crystal' | 'mica-ocean' | 'ios-aurora' | 'ios-emerald' | 'ios-rose' | 'ios-sunset' | 'ios-midnight' | 'ios-pearl'
+    railDisplayMode: 'icon',  // 'icon' (Sadece Simge - Varsayılan) | 'text' (Sadece İsim) | 'both' (Simge + İsim)
     autoSleepMinutes: 15,     // Hareketsiz arka plan sekmelerini uyutma süresi (dk, 0 = Kapalı)
     adblockEnabled: true,     // Dahili ağ katmanı reklam & izleyici engelleyici
     adblockTotalBlocked: 0,   // Toplam engellenen reklam/izleyici sayacı
@@ -65,7 +65,7 @@ const DEFAULT_CONFIG = {
     autoHide: false,          // Otomatik kenara gizle (tam ekran kenar sensörlü)
     dockReserve: true,        // Masaüstü alanını daralt (tam ekran uygulamalar şeridin yanında durur)
     isPinned: false,          // Varsayılan false: boş bir yere / sayfaya tıklanınca açık sekme otomatik kapanır
-    railWidth: 22,            // Kapalı şerit genişliği (minimum 22px, isteğe bağlı genişletilebilir)
+    railWidth: 42,            // Kapalı şerit genişliği (varsayılan 42px sade simge şeridi, 22-160px arası ayarlanabilir)
     panelWidth: 420,          // Açık uygulama paneli genişliği (hafızada tutulur)
     lastOpenedSiteId: null,   // Son açılan sekme kimliği
     handleYRatio: 0.38,       // Kenara gizle tutamacının dikey konumu
@@ -167,15 +167,11 @@ class ConfigStore {
         let sites = Array.isArray(parsed.sites) ? parsed.sites : DEFAULT_CONFIG.sites;
         const mergedSettings = { ...DEFAULT_CONFIG.settings, ...(parsed.settings || {}) };
 
-        mergedSettings.railWidth = Math.max(22, Math.min(160, Number(mergedSettings.railWidth) || 22));
+        mergedSettings.railWidth = Math.max(22, Math.min(160, Number(mergedSettings.railWidth) || 42));
         mergedSettings.splitRatio = Math.max(0.22, Math.min(0.78, Number(mergedSettings.splitRatio) || 0.5));
 
         if ((parsed.configVersion || 1) < 3) {
           mergedSettings.dockReserve = true;
-          mergedSettings.material = (!mergedSettings.material || mergedSettings.material === 'none')
-            ? 'acrylic'
-            : mergedSettings.material;
-          mergedSettings.glassTint = mergedSettings.glassTint || 'ios-crystal';
           const hasWa = sites.some((s) => /whatsapp/i.test(s.url || '') || /whatsapp/i.test(s.name || ''));
           if (!hasWa) {
             sites = [DEFAULT_CONFIG.sites[0], ...sites];
@@ -189,6 +185,16 @@ class ConfigStore {
         if ((parsed.configVersion || 1) < 6) {
           mergedSettings.adblockEnabled = true;
           mergedSettings.activeWorkspace = 'all';
+        }
+
+        if ((parsed.configVersion || 1) < 7) {
+          mergedSettings.railDisplayMode = 'icon';
+          mergedSettings.glassTint = 'zen-clean';
+          mergedSettings.material = 'none';
+          mergedSettings.activeWorkspace = 'all';
+          if (!parsed.settings?.railWidth || Number(parsed.settings.railWidth) < 40) {
+            mergedSettings.railWidth = 42;
+          }
         }
 
         sites = sites.map((s) => ({
@@ -213,7 +219,7 @@ class ConfigStore {
         }
 
         this.data = {
-          configVersion: 6,
+          configVersion: 7,
           settings: mergedSettings,
           workspaces: Array.isArray(parsed.workspaces) && parsed.workspaces.length >= 2
             ? parsed.workspaces
@@ -241,10 +247,10 @@ class ConfigStore {
   save(newData) {
     if (newData) {
       const merged = { ...DEFAULT_CONFIG.settings, ...(newData.settings || {}) };
-      merged.railWidth = Math.max(22, Math.min(160, Number(merged.railWidth) || 22));
+      merged.railWidth = Math.max(22, Math.min(160, Number(merged.railWidth) || 42));
       merged.splitRatio = Math.max(0.22, Math.min(0.78, Number(merged.splitRatio) || 0.5));
       this.data = {
-        configVersion: 6,
+        configVersion: 7,
         settings: merged,
         workspaces: Array.isArray(newData.workspaces) && newData.workspaces.length
           ? newData.workspaces
@@ -265,7 +271,7 @@ class ConfigStore {
     delete patch.activeSiteWidthId;
 
     const merged = { ...current.settings, ...patch };
-    merged.railWidth = Math.max(22, Math.min(160, Math.round(Number(merged.railWidth) || 22)));
+    merged.railWidth = Math.max(22, Math.min(160, Math.round(Number(merged.railWidth) || 42)));
     merged.splitRatio = Math.max(0.22, Math.min(0.78, Number(merged.splitRatio) || 0.5));
     if (merged.panelWidth !== undefined) {
       merged.panelWidth = Math.max(280, Math.min(2400, Math.round(Number(merged.panelWidth) || 420)));
