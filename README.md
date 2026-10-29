@@ -1,6 +1,6 @@
 # Zen Edge v2.2 — Windows 10/11 Akıllı Masaüstü Kenar Çubuğu
 
-![Version](https://img.shields.io/badge/S%C3%BCr%C3%BCm-v2.2.0-6366F1)
+![Version](https://img.shields.io/badge/S%C3%BCr%C3%BCm-v2.2.1-6366F1)
 ![Platform](https://img.shields.io/badge/Platform-Windows%2010%20%7C%2011-0078D4?logo=windows)
 ![Electron](https://img.shields.io/badge/Chromium-134%20%2F%20Electron%2035-47848F?logo=electron)
 ![Win32 DWM](https://img.shields.io/badge/Win32-DWM%20Mica%20%26%20AppBar-8B5CF6)
@@ -95,12 +95,12 @@ npm start
 - **Komut Penceresiz (Sessiz) Başlatma:** Klasördeki **`Zen-Edge.vbs`** dosyasına çift tıklayarak siyah konsol penceresi olmadan doğrudan masaüstü kenar çubuğu olarak başlatabilirsiniz.
 - **Taşınabilir `.exe` ve Kurulum Sihirbazı Üretme:**
   ```powershell
-  npm run dist:portable   # dist/Zen-Edge-Portable-2.2.0.exe üretir
+  npm run dist:portable   # dist/Zen-Edge-Portable-2.2.1.exe üretir
   npm run dist            # Hem Portable hem Setup .exe üretir
   ```
 
 ### GitHub Actions ile Otomatik `.exe` Release Sistemi
-Depodaki [`github-workflows/release.yml`](github-workflows/release.yml) dosyasını GitHub üzerinde `.github/workflows/release.yml` konumuna taşıdığınızda her `v*` etiketinde (ör. `v2.2.0`) veya **Actions → Run workflow** tetiklemesinde `Zen-Edge-Portable-*.exe` ve `Zen-Edge-Setup-*.exe` paketleri bulutta otomatik derlenerek **Releases** sekmesine yüklenir.
+Depodaki [`github-workflows/release.yml`](github-workflows/release.yml) dosyasını GitHub üzerinde `.github/workflows/release.yml` konumuna taşıdığınızda her `v*` etiketinde (ör. `v2.2.1`) veya **Actions → Run workflow** tetiklemesinde `Zen-Edge-Portable-*.exe` ve `Zen-Edge-Setup-*.exe` paketleri bulutta otomatik derlenerek **Releases** sekmesine yüklenir.
 
 ---
 

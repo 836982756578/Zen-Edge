@@ -363,7 +363,7 @@ body.mode-rail #sidebar-rail {
   border-right: none;
 }
 
-/* Kapalı Şerit Genişlik Sürükleme Tutamacı (Min 22px -> 160px) */
+/* Kapalı Şerit Genişlik Sürükleme Tutamacı (Min 22px -> 160px, görünmez — yalnızca fare imleci değişir) */
 #rail-resize-grip {
   position: absolute;
   top: 0;
@@ -373,7 +373,6 @@ body.mode-rail #sidebar-rail {
   touch-action: none;
   cursor: ew-resize;
   background: transparent;
-  transition: background 0.15s ease;
 }
 
 body.edge-right #rail-resize-grip {
@@ -386,7 +385,7 @@ body.edge-left #rail-resize-grip {
 
 #rail-resize-grip:hover,
 body.is-rail-resizing #rail-resize-grip {
-  background: var(--accent-glow);
+  background: transparent;
 }
 
 .rail-top,
@@ -832,20 +831,16 @@ html[data-theme="light"] .rail-util-btn:hover {
   overflow: hidden;
 }
 
-/* Genişlik Boyutlandırma Tutamacı (Açılır Sekme Genişliği Hafızalı) */
+/* Genişlik Boyutlandırma Tutamacı (Açılır Sekme Genişliği Hafızalı, görünmez — yalnızca fare imleci değişir) */
 #resize-grip {
   position: absolute;
   top: 0;
   bottom: 0;
-  width: 7px;
+  width: 6px;
   z-index: 50;
   touch-action: none;
   cursor: ew-resize;
   background: transparent;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.15s ease;
 }
 
 body.edge-right #resize-grip {
@@ -857,27 +852,12 @@ body.edge-left #resize-grip {
 }
 
 .resize-grip-pill {
-  width: 2.5px;
-  height: 38px;
-  border-radius: 99px;
-  background: rgba(255, 255, 255, 0.20);
-  pointer-events: none;
-  transition: background 0.15s ease, height 0.15s ease;
-}
-
-html[data-theme="light"] .resize-grip-pill {
-  background: rgba(15, 23, 42, 0.18);
+  display: none;
 }
 
 #resize-grip:hover,
 body.is-resizing #resize-grip {
-  background: rgba(var(--tint-1), 0.25);
-}
-
-#resize-grip:hover .resize-grip-pill,
-body.is-resizing #resize-grip .resize-grip-pill {
-  height: 64px;
-  background: var(--accent-glow);
+  background: transparent;
 }
 
 /* Üst Araç Çubuğu */
