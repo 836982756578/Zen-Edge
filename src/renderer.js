@@ -1,9 +1,9 @@
 /**
- * Zen Side v2.0 — Renderer Denetleyicisi
+ * Zen Edge v2.1 — Renderer Denetleyicisi
  * Geliştirici: Serkan ŞENTÜRK (sL.)
  */
 
-(async function initZenSideApp() {
+(async function initZenEdgeApp() {
   const initData = await window.sidebarAPI.getInitData();
 
   let config = initData.config;
@@ -346,7 +346,7 @@
       edgeHandle.classList.toggle('has-unread', effectiveTotal > 0);
       edgeHandle.title = effectiveTotal > 0
         ? `Yeni Bildirim: ${detailsList.join(', ')} (Tıklayın veya kenara yaklaşın)`
-        : 'Zen Side\'ı Aç (Fareyi ekran kenarına yaklaştırınca otomatik açılır)';
+        : 'Zen Edge\'i Aç (Fareyi ekran kenarına yaklaştırınca otomatik açılır)';
     }
     if (edgeUnreadBadge) {
       edgeUnreadBadge.textContent = badgeText || '0';
@@ -1631,7 +1631,7 @@
       headerSiteBadge.style.background = 'var(--accent-soft)';
       headerSiteBadge.style.color = 'var(--accent-glow)';
       headerSiteBadge.textContent = '🧰';
-      headerSiteName.textContent = 'Zen Side Mini Araçlar';
+      headerSiteName.textContent = 'Zen Edge Mini Araçlar';
       headerSiteDomain.textContent = 'Notlar • Pano Geçmişi • Hesap & Kur • Pomodoro';
       headerTitleBox.style.pointerEvents = 'none';
       return;
@@ -1640,7 +1640,7 @@
     headerTitleBox.style.pointerEvents = 'auto';
     const site = getActiveSite();
     if (!site) {
-      headerSiteName.textContent = 'Zen Side';
+      headerSiteName.textContent = 'Zen Edge';
       headerSiteDomain.textContent = 'Kısayol seçin veya ekleyin';
       headerSiteBadge.innerHTML = '';
       emptyPlaceholder.classList.remove('hidden');
@@ -3019,7 +3019,7 @@
       config = await window.sidebarAPI.updateSites(config.sites);
       await closeAllStudios(false);
       await openSiteInDrawer(newFolder.id);
-      showToast(`📁 "${finalName}" klasörü Zen Side'a eklendi`);
+      showToast(`📁 "${finalName}" klasörü Zen Edge'e eklendi`);
       return;
     }
 
@@ -3114,7 +3114,7 @@
     config = await window.sidebarAPI.updateSites(config.sites);
     await closeAllStudios(false);
     await openSiteInDrawer(newSite.id);
-    showToast(`${finalName} Zen Side'a eklendi`);
+    showToast(`${finalName} Zen Edge'e eklendi`);
   });
 
   async function deleteSiteById(siteId) {

@@ -1,19 +1,19 @@
-# Zen Side v2.1 — Windows 10/11 Akıllı Masaüstü Kenar Çubuğu
+# Zen Edge v2.1 — Windows 10/11 Akıllı Masaüstü Kenar Çubuğu
 
-![Version](https://img.shields.io/badge/S%C3%BCr%C3%BCm-v2.1.0-6366F1)
+![Version](https://img.shields.io/badge/S%C3%BCr%C3%BCm-v2.1.1-6366F1)
 ![Platform](https://img.shields.io/badge/Platform-Windows%2010%20%7C%2011-0078D4?logo=windows)
 ![Electron](https://img.shields.io/badge/Chromium-134%20%2F%20Electron%2035-47848F?logo=electron)
 ![Win32 DWM](https://img.shields.io/badge/Win32-DWM%20Mica%20%26%20AppBar-8B5CF6)
 ![AdBlock](https://img.shields.io/badge/AdBlock-Dahili%20A%C4%9F%20Kalkan%C4%B1-10B981)
 ![License](https://img.shields.io/badge/Lisans-MIT-22C55E)
 
-**Zen Side**, Windows 10 ve Windows 11 masaüstünüze **donanım hızlandırmalı Windows 11 Mica & iOS Buzlu Cam (Acrylic)**, **Klasör Sabitleme & 0-RAM Yerleşik Klasör/Dosya Gezgini**, **Çift Sekme Bölünmüş Görünüm (Split-View)**, **Sürükle & Bırak Süper Gücü**, **0-RAM Yerleşik Mini Araçlar**, **Dahili Reklam & İzleyici Engelleyici**, **Ekran Görüntüsü Kırp & Yapay Zekaya Sor (`✂️`)**, **Çoklu Monitör & Çalışma Alanları** ve **Canlı WhatsApp Bildirim Rozetleri** kazandıran açık kaynaklı, ultra ince masaüstü kenar çubuğudur.
+**Zen Edge**, Windows 10 ve Windows 11 masaüstünüze **donanım hızlandırmalı Windows 11 Mica & iOS Buzlu Cam (Acrylic)**, **Klasör Sabitleme & 0-RAM Yerleşik Klasör/Dosya Gezgini**, **Çift Sekme Bölünmüş Görünüm (Split-View)**, **Sürükle & Bırak Süper Gücü**, **0-RAM Yerleşik Mini Araçlar**, **Dahili Reklam & İzleyici Engelleyici**, **Ekran Görüntüsü Kırp & Yapay Zekaya Sor (`✂️`)**, **Çoklu Monitör & Çalışma Alanları** ve **Canlı WhatsApp Bildirim Rozetleri** kazandıran açık kaynaklı, ultra ince masaüstü kenar çubuğudur.
 
-> **Geliştirici:** Serkan ŞENTÜRK (`sL.`) — [github.com/836982756578/Zen-Side](https://github.com/836982756578/Zen-Side)
+> **Geliştirici:** Serkan ŞENTÜRK (`sL.`) — [github.com/836982756578/Zen-Edge](https://github.com/836982756578/Zen-Edge)
 
 ---
 
-## 🌟 Zen Side v2.1 Öne Çıkan Özellikler
+## 🌟 Zen Edge v2.1 Öne Çıkan Özellikler
 
 ### 1. 📁 Klasör Sabitleme & 0-RAM Yerleşik Klasör / Dosya Gezgini
 - Bilgisayarınızdaki herhangi bir klasörü (**Masaüstü, İndirilenler, Belgeler, Resimler, Proje klasörleri vb.**) tıpkı bir web sekmesi gibi kenar çubuğuna sabitleyebilirsiniz:
@@ -51,7 +51,7 @@
 - Üst çubuktaki **`🛡️`** kalkan düğmesinden, Ayarlar'dan veya sağ tık menüsünden tek tuşla açıp kapatabilir ve engellenen toplam reklam sayısını canlı görebilirsiniz.
 
 ### 5. ✂️ Ekran Görüntüsü Kırp & Yapay Zekaya Sor (Quick Snip)
-- Şeritteki **`✂️`** makas ikonuna veya **`Alt + Shift + S`** global kısayoluna bastığınızda Zen Side saniyenin onda biri sürede şeffaflaşır ve HiDPI tam ekran kırpma arayüzü açılır.
+- Şeritteki **`✂️`** makas ikonuna veya **`Alt + Shift + S`** global kısayoluna bastığınızda Zen Edge saniyenin onda biri sürede şeffaflaşır ve HiDPI tam ekran kırpma arayüzü açılır.
 - Ekrandan istediğiniz alanı seçtiğinizde kayan cam araç çubuğu üzerinden tek tıkla:
   - **✨ Gemini'ye Sor** (Görüntüyü panoya kopyalar, Gemini sekmesini açar ve sohbet kutusuna yapıştırır)
   - **💬 Whatsapp'a Gönder** (WhatsApp sekmesini açar ve görüntüyü yapıştırır)
@@ -86,21 +86,21 @@
 
 ### Kaynak Koddan Başlatma
 ```powershell
-git clone https://github.com/836982756578/Zen-Side.git
-cd Zen-Side
+git clone https://github.com/836982756578/Zen-Edge.git
+cd Zen-Edge
 npm install
 npm start
 ```
 
-- **Komut Penceresiz (Sessiz) Başlatma:** Klasördeki **`Zen-Side.vbs`** dosyasına çift tıklayarak siyah konsol penceresi olmadan doğrudan masaüstü kenar çubuğu olarak başlatabilirsiniz.
+- **Komut Penceresiz (Sessiz) Başlatma:** Klasördeki **`Zen-Edge.vbs`** dosyasına çift tıklayarak siyah konsol penceresi olmadan doğrudan masaüstü kenar çubuğu olarak başlatabilirsiniz.
 - **Taşınabilir `.exe` ve Kurulum Sihirbazı Üretme:**
   ```powershell
-  npm run dist:portable   # dist/Zen-Side-Portable-2.0.0.exe üretir
+  npm run dist:portable   # dist/Zen-Edge-Portable-2.1.1.exe üretir
   npm run dist            # Hem Portable hem Setup .exe üretir
   ```
 
 ### GitHub Actions ile Otomatik `.exe` Release Sistemi
-Depodaki [`github-workflows/release.yml`](github-workflows/release.yml) dosyasını GitHub üzerinde `.github/workflows/release.yml` konumuna taşıdığınızda her `v*` etiketinde (ör. `v2.0.0`) veya **Actions → Run workflow** tetiklemesinde `Zen-Side-Portable-*.exe` ve `Zen-Side-Setup-*.exe` paketleri bulutta otomatik derlenerek **Releases** sekmesine yüklenir.
+Depodaki [`github-workflows/release.yml`](github-workflows/release.yml) dosyasını GitHub üzerinde `.github/workflows/release.yml` konumuna taşıdığınızda her `v*` etiketinde (ör. `v2.1.1`) veya **Actions → Run workflow** tetiklemesinde `Zen-Edge-Portable-*.exe` ve `Zen-Edge-Setup-*.exe` paketleri bulutta otomatik derlenerek **Releases** sekmesine yüklenir.
 
 ---
 
@@ -108,7 +108,7 @@ Depodaki [`github-workflows/release.yml`](github-workflows/release.yml) dosyası
 
 | Kısayol / Hareket | İşlev |
 | :--- | :--- |
-| **`Alt + S`** *(Özelleştirilebilir)* | Zen Side'ı her yerden aç / gizle (Okunmamış bildirim varsa doğrudan o sekmeyi açar) |
+| **`Alt + S`** *(Özelleştirilebilir)* | Zen Edge'i her yerden aç / gizle (Okunmamış bildirim varsa doğrudan o sekmeyi açar) |
 | **`Alt + Shift + S`** *(Özelleştirilebilir)* | **Quick Snip (`✂️`)** — Ekrandan alan kırp ve Gemini / WhatsApp'a gönder |
 | **`Alt + 0`** | **0-RAM Yerleşik Mini Araçlar (`🧰`)** panelini aç / kapat |
 | **`Alt + 1` .. `Alt + 9`** | Görünür sekmeler arasında anında geçiş yap |
@@ -123,7 +123,7 @@ Depodaki [`github-workflows/release.yml`](github-workflows/release.yml) dosyası
 ## 🗂️ Proje Mimarisi
 
 ```text
-Zen-Side/
+Zen-Edge/
 ├── src/
 │   ├── main.js               # Electron ana süreç, çoklu monitör, tam kenar sensörü, pano & Quick Snip IPC
 │   ├── win32-appbar.js       # Koffi FFI ile Win32 SHAppBarMessage, DWM Mica/Acrylic ve pencere hizalama
@@ -140,7 +140,7 @@ Zen-Side/
 │   └── icons-data.js         # Vektör ikon galerisi, iOS/Mica cam paletleri ve hazır site şablonları
 ├── github-workflows/
 │   └── release.yml           # GitHub Actions otomatik Windows Portable & Setup .exe derleme hattı
-├── Zen-Side.vbs              # Konsolsuz sessiz masaüstü başlatıcısı
+├── Zen-Edge.vbs              # Konsolsuz sessiz masaüstü başlatıcısı
 ├── Baslat.bat                # Hızlı başlatıcı betik
 ├── package.json              # Proje meta verileri ve electron-builder yapılandırması
 └── LICENSE                   # MIT Lisansı

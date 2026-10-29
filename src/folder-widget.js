@@ -1,5 +1,5 @@
 /**
- * Zen Side — 0-RAM Yerleşik Klasör & Dosya Gezgini Modülü (Folder Explorer Widget)
+ * Zen Edge — 0-RAM Yerleşik Klasör & Dosya Gezgini Modülü (Folder Explorer Widget)
  * Kenar çubuğuna sabitlenen klasörlere tıklandığında içindeki alt klasörleri ve dosyaları
  * gerçek Windows ikonları, görsel küçük resimleri, ekmek kırıntısı (breadcrumb) gezintisi,
  * arama/sıralama, hızlı önizleme ve çift yönlü sürükle-bırak desteğiyle listeler.
@@ -661,7 +661,7 @@
           prevBtn.type = 'button';
           prevBtn.className = 'folder-mini-btn';
           prevBtn.textContent = '👁';
-          prevBtn.title = 'Zen Side İçinde Hızlı Önizle';
+          prevBtn.title = 'Zen Edge İçinde Hızlı Önizle';
           prevBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             this.openPreviewForItem(item.path);

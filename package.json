@@ -1,13 +1,13 @@
 {
-  "name": "zen-side",
-  "version": "2.1.0",
-  "description": "Zen Side - Windows 10/11 için donanım hızlandırmalı Mica & iOS Cam efektli, yerel klasör/dosya gezginli, bölünmüş görünümlü (Split-View), dahili reklam engelleyicili ve 0-RAM yerel mini araçlı akıllı masaüstü kenar çubuğu",
+  "name": "zen-edge",
+  "version": "2.1.1",
+  "description": "Zen Edge - Windows 10/11 için donanım hızlandırmalı Mica & iOS Cam efektli, yerel klasör/dosya gezginli, bölünmüş görünümlü (Split-View), dahili reklam engelleyicili ve 0-RAM yerel mini araçlı akıllı masaüstü kenar çubuğu",
   "author": "Serkan ŞENTÜRK (sL.)",
   "repository": {
     "type": "git",
-    "url": "https://github.com/836982756578/Zen-Side.git"
+    "url": "https://github.com/836982756578/Zen-Edge.git"
   },
-  "homepage": "https://github.com/836982756578/Zen-Side",
+  "homepage": "https://github.com/836982756578/Zen-Edge",
   "main": "src/main.js",
   "scripts": {
     "start": "electron .",
@@ -17,10 +17,11 @@
     "dist": "npx electron-builder --win portable nsis"
   },
   "keywords": [
-    "zen-side",
+    "zen-edge",
     "sidebar",
     "edge-bar",
     "kenar-cubugu",
+    "folder-explorer",
     "windows-11",
     "mica",
     "acrylic",
@@ -38,8 +39,8 @@
     "electron": "^35.0.0"
   },
   "build": {
-    "appId": "com.zenside.desktop",
-    "productName": "Zen Side",
+    "appId": "com.zenedge.desktop",
+    "productName": "Zen Edge",
     "files": [
       "src/**/*",
       "package.json",
@@ -52,10 +53,10 @@
       ]
     },
     "portable": {
-      "artifactName": "Zen-Side-Portable-${version}.exe"
+      "artifactName": "Zen-Edge-Portable-${version}.exe"
     },
     "nsis": {
-      "artifactName": "Zen-Side-Setup-${version}.exe",
+      "artifactName": "Zen-Edge-Setup-${version}.exe",
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true

@@ -1,5 +1,5 @@
 /**
- * Zen Side — Dahili Ağ Katmanı Reklam ve İzleyici Engelleyici (0 Harici Bağımlılık)
+ * Zen Edge — Dahili Ağ Katmanı Reklam ve İzleyici Engelleyici (0 Harici Bağımlılık)
  * Chromium webRequest katmanında yüksek hacimli reklam sunucularını, pop-up ağlarını ve izleyicileri
  * alt-kaynak düzeyinde (script, subFrame, image, xhr, ping) engeller; ana sayfa gezintisini ve OAuth girişlerini bozmaz.
  */

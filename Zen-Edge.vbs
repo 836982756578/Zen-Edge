@@ -6,5 +6,5 @@ electronExe = appDir & "\node_modules\electron\dist\electron.exe"
 If fso.FileExists(electronExe) Then
   shell.Run """" & electronExe & """ """ & appDir & """", 0, False
 Else
-  MsgBox "Electron bulunamadi. Lutfen once klasorde 'npm install' komutunu calistirin.", 16, "Zen Side"
+  MsgBox "Electron bulunamadi. Lutfen once klasorde 'npm install' komutunu calistirin.", 16, "Zen Edge"
 End If

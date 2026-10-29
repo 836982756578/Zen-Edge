@@ -1,12 +1,12 @@
-# Zen Side — Otomatik Windows (.exe) Derleme ve GitHub Release İş Akışı
+# Zen Edge — Otomatik Windows (.exe) Derleme ve GitHub Release İş Akışı
 # Not: GitHub Web arayüzünden bu dosyayı `.github/workflows/release.yml` konumuna taşıdığınızda
-# (veya `workflow` yetkili bir token ile ittiğinizde) her `v*` etiketinde (ör. v2.0.0) ve
+# (veya `workflow` yetkili bir token ile ittiğinizde) her `v*` etiketinde (ör. v2.1.1) ve
 # Actions sekmesinden "Run workflow" butonuna bastığınızda otomatik olarak:
-#   - Zen-Side-Portable-<sürüm>.exe (Kurulumsuz Taşınabilir)
-#   - Zen-Side-Setup-<sürüm>.exe    (NSIS Kurulum Sihirbazı)
+#   - Zen-Edge-Portable-<sürüm>.exe (Kurulumsuz Taşınabilir)
+#   - Zen-Edge-Setup-<sürüm>.exe    (NSIS Kurulum Sihirbazı)
 # üretilir ve GitHub Releases sayfasına eklenir.
 
-name: Build & Release Zen Side (.exe)
+name: Build & Release Zen Edge (.exe)
 
 on:
   push:
@@ -55,7 +55,7 @@ jobs:
       - name: Derlenen .exe dosyalarını Actions Artifact olarak yükle
         uses: actions/upload-artifact@v4
         with:
-          name: Zen-Side-Windows-Executables
+          name: Zen-Edge-Windows-Executables
           path: |
             dist/*.exe
           if-no-files-found: error

@@ -1,5 +1,5 @@
 /**
- * Zen Side — 0-RAM Dahili Yerleşik Mini Araçlar (Native Widgets)
+ * Zen Edge — 0-RAM Dahili Yerleşik Mini Araçlar (Native Widgets)
  * Webview veya harici süreç başlatmadan anında çalışan 4 yerleşik araç:
  * 1) Yapışkan Notlar (Çoklu Not, Otomatik Kayıt, .txt Dışa Aktarma)
  * 2) Pano Geçmişi (Son 30 Kopyalanan Metin/Link, Sabitleme, Arama)
@@ -418,7 +418,7 @@
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `${(active.title || 'zen-side-not').replace(/[^a-z0-9ğüşöçıİĞÜŞÖÇ_-]/gi, '-')}.txt`;
+        a.download = `${(active.title || 'zen-edge-not').replace(/[^a-z0-9ğüşöçıİĞÜŞÖÇ_-]/gi, '-')}.txt`;
         a.click();
         URL.revokeObjectURL(url);
       });

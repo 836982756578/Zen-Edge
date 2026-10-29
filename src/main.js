@@ -24,8 +24,8 @@ app.commandLine.appendSwitch('disable-renderer-backgrounding');
 app.commandLine.appendSwitch('disable-background-timer-throttling');
 
 /**
- * Eski "edge-kenar-cubugu" kullanıcı verilerini (ayarlar, özel genişlikler ve WhatsApp oturumu/çerezleri)
- * yeni "zen-side" dizinine hiçbir veri kaybı olmadan tek seferlik taşır.
+ * Eski "zen-side" veya "edge-kenar-cubugu" kullanıcı verilerini (ayarlar, sabitli klasörler/sekmeler,
+ * özel genişlikler ve WhatsApp oturumu/çerezleri) yeni "zen-edge" dizinine veri kaybı olmadan taşır.
  */
 function copyDirBestEffort(srcDir, destDir) {
   if (!fs.existsSync(srcDir)) return;
@@ -52,17 +52,22 @@ function copyDirBestEffort(srcDir, destDir) {
 function migrateLegacyUserDataIfNeeded() {
   try {
     const newDir = app.getPath('userData');
-    const legacyDir = path.join(app.getPath('appData'), 'edge-kenar-cubugu');
-    const legacyConfig = path.join(legacyDir, 'sidebar-config.json');
     const newConfig = path.join(newDir, 'sidebar-config.json');
+    if (fs.existsSync(newConfig)) return;
 
-    if (legacyDir !== newDir && fs.existsSync(legacyConfig) && !fs.existsSync(newConfig)) {
-      if (!fs.existsSync(newDir)) {
-        fs.mkdirSync(newDir, { recursive: true });
+    const appDataDir = app.getPath('appData');
+    for (const legacyName of ['zen-side', 'edge-kenar-cubugu']) {
+      const legacyDir = path.join(appDataDir, legacyName);
+      const legacyConfig = path.join(legacyDir, 'sidebar-config.json');
+      if (legacyDir !== newDir && fs.existsSync(legacyConfig)) {
+        if (!fs.existsSync(newDir)) {
+          fs.mkdirSync(newDir, { recursive: true });
+        }
+        fs.copyFileSync(legacyConfig, newConfig);
+        copyDirBestEffort(path.join(legacyDir, 'custom-icons'), path.join(newDir, 'custom-icons'));
+        copyDirBestEffort(path.join(legacyDir, 'Partitions'), path.join(newDir, 'Partitions'));
+        break;
       }
-      fs.copyFileSync(legacyConfig, newConfig);
-      copyDirBestEffort(path.join(legacyDir, 'custom-icons'), path.join(newDir, 'custom-icons'));
-      copyDirBestEffort(path.join(legacyDir, 'Partitions'), path.join(newDir, 'Partitions'));
     }
   } catch (err) {
     console.warn('[Migration] Eski veri taşıma uyarısı:', err.message);
@@ -124,7 +129,7 @@ const chromeVer = process.versions.chrome || '134.0.0.0';
 const DESKTOP_EDGE_UA = `Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${chromeVer} Safari/537.36 Edg/${chromeVer}`;
 const MOBILE_EDGE_UA = `Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${chromeVer} Mobile Safari/537.36 EdgA/${chromeVer}`;
 
-// Tek örnek kilidi (uygulama iki kez açılırsa mevcut Zen Side penceresini öne getirir)
+// Tek örnek kilidi (uygulama iki kez açılırsa mevcut Zen Edge penceresini öne getirir)
 const gotLock = app.requestSingleInstanceLock();
 if (!gotLock) {
   app.quit();
@@ -206,7 +211,7 @@ function sendEventToRenderer(payload) {
 }
 
 /**
- * Yüksek çözünürlüklü 32x32 Zen Side İkon Üreticisi (BGRA Bitmap)
+ * Yüksek çözünürlüklü 32x32 Zen Edge İkon Üreticisi (BGRA Bitmap)
  * hasUnread=true olduğunda sağ üst köşede parlak zümrüt bildirim rozeti çizer.
  */
 function createSidebarIcon(hasUnread = false) {
@@ -256,7 +261,7 @@ function createSidebarIcon(hasUnread = false) {
         continue;
       }
 
-      // Zen Side indigo-camgöbeği gradyan (BGRA sırası)
+      // Zen Edge indigo-camgöbeği gradyan (BGRA sırası)
       const t = (x + y) / (size * 2);
       let red = Math.round(35 + t * 65);
       let green = Math.round(95 + t * 105);
@@ -820,7 +825,7 @@ function buildTrayMenu() {
 
   const contextMenu = Menu.buildFromTemplate([
     {
-      label: 'Zen Side Göster / Gizle',
+      label: 'Zen Edge Göster / Gizle',
       click: () => {
         if (!mainWindow) return;
         mainWindow.show();
@@ -1077,7 +1082,7 @@ function createMainWindow() {
       : (initDisplay.bounds.x + initDisplay.bounds.width - uiWindowState.railWidth));
 
   mainWindow = new BrowserWindow({
-    title: 'Zen Side',
+    title: 'Zen Edge',
     x: initX,
     y: startHidden ? -16000 : initDisplay.workArea.y,
     width: startHidden ? 4 : uiWindowState.railWidth,
@@ -1180,7 +1185,7 @@ function createMainWindow() {
 
   // Sistem Tepsisi (Tray)
   tray = new Tray(icon);
-  tray.setToolTip('Zen Side');
+  tray.setToolTip('Zen Edge');
   tray.on('click', () => {
     if (!mainWindow || mainWindow.isDestroyed()) return;
     if (Date.now() - lastOutsideCloseAt < 350) return;
@@ -1238,7 +1243,7 @@ app.on('web-contents-created', (_event, contents) => {
           center: true,
           autoHideMenuBar: true,
           alwaysOnTop: true,
-          title: 'Giriş Yap - Zen Side',
+          title: 'Giriş Yap - Zen Edge',
           webPreferences: {
             nodeIntegration: false,
             contextIsolation: true
@@ -1291,7 +1296,7 @@ app.on('web-contents-created', (_event, contents) => {
           click: () => contents.loadURL(params.linkURL)
         },
         {
-          label: 'Bağlantıyı Zen Side\'a Sabitle (+)',
+          label: 'Bağlantıyı Zen Edge\'e Sabitle (+)',
           click: () => {
             sendEventToRenderer({
               type: 'pin-url-to-sidebar',
@@ -1347,7 +1352,7 @@ app.on('web-contents-created', (_event, contents) => {
         click: () => openUrlExternal(contents.getURL(), true)
       },
       {
-        label: 'Bu Sayfayı Zen Side\'a Sabitle (+)',
+        label: 'Bu Sayfayı Zen Edge\'e Sabitle (+)',
         click: () => {
           sendEventToRenderer({
             type: 'pin-url-to-sidebar',
@@ -1495,8 +1500,8 @@ ipcMain.handle('sidebar:set-unread-summary', (_e, summary) => {
     }
     tray.setToolTip(
       nowHasUnread && unreadSummary.details
-        ? `Zen Side — ${unreadSummary.details}`
-        : 'Zen Side'
+        ? `Zen Edge — ${unreadSummary.details}`
+        : 'Zen Edge'
     );
   }
 
@@ -1590,7 +1595,7 @@ ipcMain.handle('snip:complete', async (_e, { action, targetSiteId, pngDataUrl })
       try {
         const res = await dialog.showSaveDialog(mainWindow, {
           title: 'Ekran Görüntüsünü Kaydet',
-          defaultPath: `zen-side-snip-${Date.now()}.png`,
+          defaultPath: `zen-edge-snip-${Date.now()}.png`,
           filters: [{ name: 'PNG Görseli', extensions: ['png'] }]
         });
         if (!res.canceled && res.filePath) {
@@ -1672,8 +1677,8 @@ ipcMain.handle('sidebar:export-config', async () => {
   ignoreBlurCount++;
   try {
     const res = await dialog.showSaveDialog(mainWindow, {
-      title: 'Zen Side Yapılandırmasını Dışa Aktar',
-      defaultPath: 'zen-side-yedek.json',
+      title: 'Zen Edge Yapılandırmasını Dışa Aktar',
+      defaultPath: 'zen-edge-yedek.json',
       filters: [{ name: 'JSON Dosyası', extensions: ['json'] }]
     });
     if (res.canceled || !res.filePath) return { canceled: true };
@@ -1690,7 +1695,7 @@ ipcMain.handle('sidebar:import-config', async () => {
   ignoreBlurCount++;
   try {
     const res = await dialog.showOpenDialog(mainWindow, {
-      title: 'Zen Side Yapılandırmasını İçe Aktar',
+      title: 'Zen Edge Yapılandırmasını İçe Aktar',
       filters: [{ name: 'JSON Dosyası', extensions: ['json'] }],
       properties: ['openFile']
     });
@@ -1794,7 +1799,7 @@ ipcMain.handle('sidebar:pick-folder', async () => {
   ignoreBlurCount++;
   try {
     const res = await dialog.showOpenDialog(mainWindow, {
-      title: 'Zen Side\'a Sabitlenecek Klasörü Seçin',
+      title: 'Zen Edge\'e Sabitlenecek Klasörü Seçin',
       properties: ['openDirectory']
     });
     if (res.canceled || !res.filePaths.length) {
@@ -2164,7 +2169,7 @@ ipcMain.handle('sidebar:folder-item-context-menu', (_e, info) => {
           ...(info.canPreview
             ? [
                 {
-                  label: '👁️ Zen Side İçinde Hızlı Önizle',
+                  label: '👁️ Zen Edge İçinde Hızlı Önizle',
                   click: () => done('preview')
                 }
               ]
@@ -2520,12 +2525,12 @@ ipcMain.handle('sidebar:rail-context-menu', () => {
       },
       { type: 'separator' },
       {
-        label: 'Zen Side Ayarları…',
+        label: 'Zen Edge Ayarları…',
         click: () => done('settings')
       },
       { type: 'separator' },
       {
-        label: 'Zen Side\'dan Çık',
+        label: 'Zen Edge\'den Çık',
         click: () => done('quit')
       }
     ]);

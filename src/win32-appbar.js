@@ -244,7 +244,7 @@ class Win32AppBar {
   getCallbackMessage() {
     if (!initWin32()) return 0;
     if (!this.callbackMsg) {
-      this.callbackMsg = RegisterWindowMessageW('EdgeKenarCubuguAppBarCallback') || (0x0400 + 101);
+      this.callbackMsg = RegisterWindowMessageW('ZenEdgeAppBarCallback') || (0x0400 + 101);
     }
     return this.callbackMsg;
   }

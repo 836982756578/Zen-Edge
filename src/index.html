@@ -3,20 +3,20 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Zen Side</title>
+  <title>Zen Edge</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body class="mode-rail edge-right">
   <!-- 1) OTO-GİZLE KENAR TUTAMACI & CANLI BİLDİRİM ROZETİ -->
-  <div id="edge-handle" title="Zen Side'ı Aç (Fareyi ekran kenarına yaklaştırınca otomatik açılır)">
+  <div id="edge-handle" title="Zen Edge'i Aç (Fareyi ekran kenarına yaklaştırınca otomatik açılır)">
     <div class="handle-pill"></div>
     <span id="edge-unread-badge" class="edge-unread-badge hidden">0</span>
   </div>
 
-  <!-- 2) ANA ZEN SIDE DÜZENİ (PANEL + İNCE ŞERİT) -->
+  <!-- 2) ANA ZEN EDGE DÜZENİ (PANEL + İNCE ŞERİT) -->
   <div id="app-shell">
     <!-- GENİŞLEYEN İÇERİK PANELİ -->
-    <section id="drawer-panel" aria-label="Zen Side Uygulama Paneli">
+    <section id="drawer-panel" aria-label="Zen Edge Uygulama Paneli">
       <div id="resize-grip" title="Açılır sekme genişliğini ayarlamak için sürükleyin (Otomatik hafızaya alınır)">
         <div class="resize-grip-pill"></div>
       </div>
@@ -26,7 +26,7 @@
         <div class="header-site-info" id="header-title-box" title="Adresi düzenlemek veya gitmek için tıklayın">
           <div id="header-site-badge" class="mini-badge"></div>
           <div class="header-titles">
-            <span id="header-site-name">Zen Side</span>
+            <span id="header-site-name">Zen Edge</span>
             <span id="header-site-domain">Hazır</span>
           </div>
         </div>
@@ -91,7 +91,7 @@
               <line x1="15" y1="3" x2="15" y2="21"/>
             </svg>
           </div>
-          <h3>Zen Side</h3>
+          <h3>Zen Edge</h3>
           <p>Sağdaki kuleden bir sekme seçin, bir metni/görseli sekmenin üzerine sürükleyip bırakın veya <strong>+</strong> ile yeni site ekleyin.</p>
           <button type="button" class="primary-btn" id="btn-empty-add">+ Yeni Site Ekle</button>
         </div>
@@ -125,7 +125,7 @@
       </main>
 
       <!-- 0-RAM DAHİLİ YERLEŞİK MİNİ ARAÇLAR SAHNESİ (Notlar / Pano / Hesaplayıcı / Pomodoro) -->
-      <section id="tools-stage" class="hidden" aria-label="Zen Side Yerleşik Mini Araçlar">
+      <section id="tools-stage" class="hidden" aria-label="Zen Edge Yerleşik Mini Araçlar">
         <div class="tools-nav-tabs" role="tablist">
           <button type="button" class="tool-tab-btn active" data-tool-tab="notes">📝 Notlar</button>
           <button type="button" class="tool-tab-btn" data-tool-tab="clipboard">📋 Pano (30)</button>
@@ -239,7 +239,7 @@
       </section>
 
       <!-- 0-RAM YERLEŞİK KLASÖR & DOSYA GEZGİNİ SAHNESİ -->
-      <section id="folder-stage" class="hidden" aria-label="Zen Side Klasör ve Dosya Gezgini">
+      <section id="folder-stage" class="hidden" aria-label="Zen Edge Klasör ve Dosya Gezgini">
         <!-- Üst Gezinti & Ekmek Kırıntısı (Breadcrumb) Çubuğu -->
         <div class="folder-nav-bar">
           <button type="button" class="folder-icon-btn" id="btn-folder-root" title="Sabitlenen Ana Klasöre Dön">🏠</button>
@@ -322,7 +322,7 @@
             </div>
             <div id="preview-icon-box" class="rail-icon-preview" title="Üst Çubuk İkonu"></div>
             <div class="preview-meta">
-              <div class="preview-label">ZEN SIDE CANLI SEKME ÖNİZLEMESİ</div>
+              <div class="preview-label">ZEN EDGE CANLI SEKME ÖNİZLEMESİ</div>
               <div id="preview-title-text" class="preview-site-title">Whatsapp</div>
               <div id="preview-url-text" class="preview-site-url">https://...</div>
             </div>
@@ -504,10 +504,10 @@
         </form>
       </div>
 
-      <!-- STÜDYO 2: ZEN SIDE AYARLARI PANELİ -->
+      <!-- STÜDYO 2: ZEN EDGE AYARLARI PANELİ -->
       <div id="studio-settings-modal" class="studio-overlay hidden">
         <div class="studio-header">
-          <h2>Zen Side Ayarları</h2>
+          <h2>Zen Edge Ayarları</h2>
           <button type="button" class="hdr-btn" id="btn-close-settings-modal" title="Kapat">
             <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
           </button>
@@ -644,7 +644,7 @@
             <label class="toggle-row">
               <div>
                 <div class="toggle-title">Windows Açılışında Otomatik Başlat</div>
-                <div class="toggle-desc">Bilgisayar açıldığında Zen Side hazır bekler</div>
+                <div class="toggle-desc">Bilgisayar açıldığında Zen Edge hazır bekler</div>
               </div>
               <input type="checkbox" id="set-launch-startup" />
             </label>
@@ -725,7 +725,7 @@
               Paylaşılan Oturum Çerezlerini & Önbelleği Temizle
             </button>
             <button type="button" class="danger-btn full-width mt-8" id="btn-quit-app">
-              Zen Side'ı Tamamen Kapat (Çıkış)
+              Zen Edge'i Tamamen Kapat (Çıkış)
             </button>
           </div>
         </div>
@@ -736,12 +736,12 @@
     </section>
 
     <!-- İNCE DİKEY / YATAY UYARLANABİLİR SEKME ŞERİDİ (Min 22px -> 160px) -->
-    <aside id="sidebar-rail" aria-label="Zen Side İnce Sekme Şeridi">
+    <aside id="sidebar-rail" aria-label="Zen Edge İnce Sekme Şeridi">
       <div id="rail-resize-grip" title="Şerit genişliğini büyütmek/küçültmek için sürükleyin (Min: 22px, Çift Tık: Sıfırla)"></div>
 
       <!-- Üst Aç/Kapat & Çalışma Alanı Seçici -->
       <div class="rail-top">
-        <button type="button" id="btn-rail-brand" class="rail-brand-btn" title="Zen Side Aç / Daralt (Alt+S)">
+        <button type="button" id="btn-rail-brand" class="rail-brand-btn" title="Zen Edge Aç / Daralt (Alt+S)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="15 18 9 12 15 6"/>
           </svg>
@@ -783,7 +783,7 @@
         <button type="button" id="btn-rail-autohide" class="rail-util-btn" title="Otomatik Kenara Gizle">
           <svg viewBox="0 0 24 24"><polyline points="13 17 18 12 13 7"/><polyline points="6 17 11 12 6 7"/></svg>
         </button>
-        <button type="button" id="btn-rail-settings" class="rail-util-btn" title="Zen Side Ayarları">
+        <button type="button" id="btn-rail-settings" class="rail-util-btn" title="Zen Edge Ayarları">
           <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         </button>
       </div>
