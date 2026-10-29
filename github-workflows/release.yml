@@ -44,6 +44,7 @@ jobs:
           node --check src/preload.js
           node --check src/snip-preload.js
           node --check src/tools-widget.js
+          node --check src/folder-widget.js
           node --check src/renderer.js
 
       - name: Portable ve Setup .exe paketlerini üret

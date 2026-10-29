@@ -33,8 +33,9 @@
   const mutedSet = new Set();         // Sesi kapatılmış siteId kümesi
   let topUnreadSiteId = null;
 
-  // Site düzenleme formu durumu
+  // Site / Klasör düzenleme formu durumu
   let editingSiteId = null;
+  let formEntryType = 'site'; // 'site' | 'folder'
   let nameManuallyEdited = false;
   let workspaceManuallyEdited = false;
   let formIconState = {
@@ -43,6 +44,17 @@
     iconBg: window.SIDEBAR_PRESETS.gradients[0].value
   };
 
+  function isFolderItem(item) {
+    return Boolean(item && item.type === 'folder');
+  }
+
+  function extractFolderBaseName(folderPath) {
+    const cleaned = String(folderPath || '').trim().replace(/[\\/]+$/, '');
+    if (!cleaned) return '';
+    const parts = cleaned.split(/[\\/]/).filter(Boolean);
+    return parts[parts.length - 1] || cleaned;
+  }
+
   // DOM Referansları
   const body = document.body;
   const edgeHandle = document.getElementById('edge-handle');
@@ -50,6 +62,7 @@
   const appTower = document.getElementById('app-tower');
   const webviewsStage = document.getElementById('webviews-stage');
   const toolsStage = document.getElementById('tools-stage');
+  const folderStage = document.getElementById('folder-stage');
   const emptyPlaceholder = document.getElementById('empty-stage-placeholder');
   const loadingBar = document.getElementById('loading-bar');
   const resizeGrip = document.getElementById('resize-grip');
@@ -98,10 +111,17 @@
   const btnRailAutohide = document.getElementById('btn-rail-autohide');
   const btnRailSettings = document.getElementById('btn-rail-settings');
 
-  // Site Ekle / Özelleştir Stüdyosu
+  // Site & Klasör Ekle / Özelleştir Stüdyosu
   const siteModal = document.getElementById('studio-site-modal');
   const studioModalTitle = document.getElementById('studio-modal-title');
   const siteForm = document.getElementById('site-editor-form');
+  const entryTypeSwitcher = document.getElementById('entry-type-switcher');
+  const siteUrlFieldGroup = document.getElementById('site-url-field-group');
+  const folderPickerFieldGroup = document.getElementById('folder-picker-field-group');
+  const specialFoldersStrip = document.getElementById('special-folders-strip');
+  const inputFolderPath = document.getElementById('input-folder-path');
+  const btnBrowseFolder = document.getElementById('btn-browse-folder');
+  const webAdvancedOptionsBox = document.getElementById('web-advanced-options-box');
   const inputSiteUrl = document.getElementById('input-site-url');
   const inputSiteName = document.getElementById('input-site-name');
   const inputSiteWorkspace = document.getElementById('input-site-workspace');
@@ -440,8 +460,14 @@
 
   function renderIconInto(el, siteLike) {
     el.innerHTML = '';
-    const type = siteLike.iconType || 'favicon';
-    const bg = siteLike.iconBg || 'rgba(255, 255, 255, 0.08)';
+    const rawType = siteLike.iconType || (isFolderItem(siteLike) ? 'preset' : 'favicon');
+    const type = (isFolderItem(siteLike) && rawType === 'favicon') ? 'preset' : rawType;
+    const iconVal = (isFolderItem(siteLike) && type === 'preset' && !siteLike.iconValue)
+      ? 'folder'
+      : siteLike.iconValue;
+    const bg = siteLike.iconBg || (isFolderItem(siteLike)
+      ? 'linear-gradient(135deg, #f59e0b, #d97706)'
+      : 'rgba(255, 255, 255, 0.08)');
 
     if (type === 'favicon') {
       el.style.background = siteLike.iconBg && siteLike.iconBg !== 'rgba(255, 255, 255, 0.09)'
@@ -468,7 +494,7 @@
     if (type === 'preset') {
       el.style.background = bg;
       el.style.color = '#ffffff';
-      const svg = window.SIDEBAR_PRESETS.icons[siteLike.iconValue] || window.SIDEBAR_PRESETS.icons.globe;
+      const svg = window.SIDEBAR_PRESETS.icons[iconVal] || window.SIDEBAR_PRESETS.icons.globe;
       el.innerHTML = svg;
       return;
     }
@@ -641,14 +667,22 @@
 
   // ==================== ÇİFT SEKME BÖLÜNMÜŞ GÖRÜNÜM (SPLIT-VIEW) ====================
 
+  function isActiveFolderOpen() {
+    const active = getActiveSite();
+    return Boolean(!toolsViewOpen && active && isFolderItem(active));
+  }
+
   function isSplitActive() {
+    const primary = config.sites.find((s) => s.id === activeSiteId);
+    const secondary = config.sites.find((s) => s.id === splitSiteId);
     return Boolean(
       !toolsViewOpen &&
       drawerOpen &&
-      activeSiteId &&
-      splitSiteId &&
-      splitSiteId !== activeSiteId &&
-      config.sites.some((s) => s.id === splitSiteId)
+      primary &&
+      secondary &&
+      !isFolderItem(primary) &&
+      !isFolderItem(secondary) &&
+      splitSiteId !== activeSiteId
     );
   }
 
@@ -660,7 +694,7 @@
     renderIconInto(splitSiteBadge, secondary);
     splitSiteSelect.innerHTML = '';
     config.sites
-      .filter((s) => s.id !== activeSiteId)
+      .filter((s) => s.id !== activeSiteId && !isFolderItem(s))
       .forEach((s) => {
         const opt = new Option(s.name, s.id);
         if (s.id === splitSiteId) opt.selected = true;
@@ -669,6 +703,7 @@
   }
 
   function syncWebviewVisibility() {
+    const folderOpen = isActiveFolderOpen();
     const splitOn = isSplitActive();
     if (!splitOn && splitSiteId === activeSiteId) {
       splitSiteId = null;
@@ -680,12 +715,24 @@
     if (splitDividerBar) splitDividerBar.classList.toggle('hidden', !splitOn);
     if (btnSplitView) btnSplitView.classList.toggle('active', splitOn);
 
-    webviewsStage.classList.toggle('hidden', toolsViewOpen);
+    webviewsStage.classList.toggle('hidden', toolsViewOpen || folderOpen);
     if (toolsStage) toolsStage.classList.toggle('hidden', !toolsViewOpen);
+    if (folderStage) folderStage.classList.toggle('hidden', !folderOpen);
     if (headerWebActions) headerWebActions.classList.toggle('hidden', toolsViewOpen);
 
+    // Klasör görünümündeyken web'e özgü mobil/AdBlock/Split-View düğmelerini gizle
+    if (btnToggleUa) btnToggleUa.classList.toggle('hidden', folderOpen);
+    if (btnToggleAdblock) btnToggleAdblock.classList.toggle('hidden', folderOpen);
+    if (btnSplitView) btnSplitView.classList.toggle('hidden', folderOpen);
+    if (btnOpenEdge) {
+      btnOpenEdge.title = folderOpen ? 'Windows Dosya Gezgininde Aç' : 'Microsoft Edge\'de Aç';
+    }
+    if (btnEditCurrent) {
+      btnEditCurrent.title = folderOpen ? 'Klasörü & İkonu Özelleştir' : 'Siteyi & İkonu Özelleştir';
+    }
+
     webviewMap.forEach((view, id) => {
-      view.classList.toggle('active-view', !toolsViewOpen && id === activeSiteId);
+      view.classList.toggle('active-view', !toolsViewOpen && !folderOpen && id === activeSiteId);
       view.classList.toggle('split-secondary-view', splitOn && id === splitSiteId);
     });
 
@@ -695,19 +742,27 @@
   }
 
   async function openSplitWithSite(targetSecondaryId) {
-    if (config.sites.length < 2) {
-      showToast('Bölünmüş görünüm için en az 2 sekme gereklidir');
+    const targetCandidate = config.sites.find((s) => s.id === targetSecondaryId);
+    if (isFolderItem(targetCandidate)) {
+      await openSiteInDrawer(targetCandidate.id);
+      return;
+    }
+
+    const webSites = config.sites.filter((s) => !isFolderItem(s));
+    if (webSites.length < 2) {
+      showToast('Bölünmüş görünüm için en az 2 web sekmesi gereklidir');
       return;
     }
 
     closeAllStudios(false);
     toolsViewOpen = false;
 
-    if (!activeSiteId || activeSiteId === targetSecondaryId) {
-      const fallbackPrimary =
-        (lastOpenedSiteId && lastOpenedSiteId !== targetSecondaryId && config.sites.some((s) => s.id === lastOpenedSiteId))
-          ? lastOpenedSiteId
-          : config.sites.find((s) => s.id !== targetSecondaryId)?.id;
+    const currentPrimary = config.sites.find((s) => s.id === activeSiteId);
+    if (!currentPrimary || isFolderItem(currentPrimary) || activeSiteId === targetSecondaryId) {
+      const lastWeb = lastOpenedSiteId
+        ? webSites.find((s) => s.id === lastOpenedSiteId && s.id !== targetSecondaryId)
+        : null;
+      const fallbackPrimary = (lastWeb || webSites.find((s) => s.id !== targetSecondaryId))?.id;
       if (!fallbackPrimary) return;
       activeSiteId = fallbackPrimary;
     }
@@ -837,8 +892,77 @@
     showToast(`Metin ${site.name} sekmesine aktarıldı`);
   }
 
+  async function pinFolderDirectly(folderPath, customName = '') {
+    const cleanedPath = String(folderPath || '').trim();
+    if (!cleanedPath) return;
+
+    const existing = config.sites.find(
+      (s) => isFolderItem(s) && String(s.folderPath || '').toLowerCase() === cleanedPath.toLowerCase()
+    );
+    if (existing) {
+      closeAllStudios(false);
+      await openSiteInDrawer(existing.id);
+      showToast(`📁 "${existing.name}" klasörü açıldı`);
+      return;
+    }
+
+    const baseName = customName.trim() || extractFolderBaseName(cleanedPath) || 'Klasör';
+    const activeWs = config.settings.activeWorkspace;
+    const chosenWs = (activeWs && activeWs !== 'all') ? activeWs : 'general';
+
+    const newFolderItem = {
+      id: `folder-${Date.now().toString(36)}`,
+      type: 'folder',
+      name: baseName,
+      url: 'zen://folder',
+      folderPath: cleanedPath,
+      workspace: chosenWs,
+      iconType: 'preset',
+      iconValue: 'folder',
+      iconBg: 'linear-gradient(135deg, #f59e0b, #d97706)',
+      mobileMode: false,
+      keepAwake: false,
+      isolatedSession: false,
+      zoom: 1.0,
+      customWidth: null
+    };
+
+    config.sites.push(newFolderItem);
+    config = await window.sidebarAPI.updateSites(config.sites);
+    await closeAllStudios(false);
+    await openSiteInDrawer(newFolderItem.id);
+    showToast(`📁 "${baseName}" klasörü kenar çubuğuna eklendi`);
+  }
+
   async function deliverDroppedFilesToSite(site, fileList) {
     if (!fileList || !fileList.length) return;
+
+    // Hedef sekme bir Klasör ise -> Sürüklenen dosyaları doğrudan bu klasörün içine kopyala!
+    if (isFolderItem(site)) {
+      const paths = [];
+      for (const f of Array.from(fileList)) {
+        const p = window.sidebarAPI.getFilePath(f);
+        if (p) paths.push(p);
+      }
+      if (!paths.length) return;
+
+      const res = await window.sidebarAPI.copyFilesIntoFolder({
+        sourcePaths: paths,
+        targetDir: site.folderPath
+      });
+      closeAllStudios(false);
+      await openSiteInDrawer(site.id);
+      if (res.ok && res.copiedCount > 0) {
+        if (window.ZenFolderWidget) {
+          await window.ZenFolderWidget.reloadCurrentDirectory();
+        }
+        showToast(`📥 ${res.copiedCount} öğe "${site.name}" klasörüne kopyalandı`);
+      } else if (res.error) {
+        showToast(`Kopyalama hatası: ${res.error}`);
+      }
+      return;
+    }
+
     const file = fileList[0];
     let copied = false;
 
@@ -913,10 +1037,13 @@
       else if (site.keepAwake) statusNotes.push('⚡ Bildirimler İçin Uyanık');
 
       const shortcutHint = index < 9 ? ` [Alt+${index + 1}]` : '';
+      const isFolder = isFolderItem(site);
       btn.title = [
-        `${site.name}${shortcutHint}`,
+        `${isFolder ? '📁 ' : ''}${site.name}${shortcutHint}`,
         statusNotes.length ? statusNotes.join(' • ') : null,
-        `${extractDomain(site.url)} (Shift+Tık: Bölünmüş Görünüm | Metin/Görsel Sürükle-Bırak)`
+        isFolder
+          ? `${site.folderPath}\n(Tıkla: Klasör İçeriğini Göster | Üzerine Dosya Bırak: Klasöre Kopyala)`
+          : `${extractDomain(site.url)} (Shift+Tık: Bölünmüş Görünüm | Metin/Görsel Sürükle-Bırak)`
       ].filter(Boolean).join('\n');
 
       btn.draggable = true;
@@ -987,6 +1114,7 @@
         const action = await window.sidebarAPI.showSiteContextMenu({
           id: site.id,
           name: site.name,
+          isFolder: isFolderItem(site),
           workspace: site.workspace || 'general',
           mobileMode: Boolean(site.mobileMode),
           keepAwake: Boolean(site.keepAwake),
@@ -1050,7 +1178,7 @@
           e.dataTransfer.getData('text/plain') ||
           e.dataTransfer.getData('text/uri-list') ||
           '';
-        if (droppedText.trim()) {
+        if (droppedText.trim() && !isFolderItem(site)) {
           await deliverDroppedTextToSite(site, droppedText);
         }
       });
@@ -1093,7 +1221,25 @@
       case 'edit':
         openSiteEditor(site.id);
         break;
+      case 'open-explorer':
+        if (site.folderPath) {
+          window.sidebarAPI.openPath(site.folderPath);
+        }
+        break;
+      case 'copy-folder-path':
+        if (site.folderPath) {
+          await window.sidebarAPI.writeClipboardText(site.folderPath);
+          showToast('📋 Klasör yolu panoya kopyalandı');
+        }
+        break;
       case 'reload': {
+        if (isFolderItem(site)) {
+          if (activeSiteId === site.id && window.ZenFolderWidget) {
+            await window.ZenFolderWidget.reloadCurrentDirectory();
+            showToast('Klasör içeriği yenilendi');
+          }
+          break;
+        }
         const wv = webviewMap.get(site.id);
         if (wv) wv.reload();
         break;
@@ -1183,6 +1329,7 @@
   }
 
   function createOrGetWebview(site) {
+    if (!site || isFolderItem(site)) return null;
     if (webviewMap.has(site.id)) {
       lastActiveMap.set(site.id, Date.now());
       return webviewMap.get(site.id);
@@ -1401,7 +1548,7 @@
   function preloadKeepAwakeSites() {
     let loadedAny = false;
     config.sites.forEach((site) => {
-      if (site.keepAwake && !webviewMap.has(site.id)) {
+      if (!isFolderItem(site) && site.keepAwake && !webviewMap.has(site.id)) {
         createOrGetWebview(site);
         loadedAny = true;
       }
@@ -1419,7 +1566,7 @@
     toolsViewOpen = false;
     activeSiteId = site.id;
     lastOpenedSiteId = site.id;
-    if (splitSiteId === site.id) {
+    if (splitSiteId === site.id || isFolderItem(site)) {
       splitSiteId = null;
     }
     drawerOpen = true;
@@ -1432,7 +1579,14 @@
 
     emptyPlaceholder.classList.add('hidden');
     const currentSite = config.sites.find((s) => s.id === siteId) || site;
-    createOrGetWebview(currentSite);
+
+    if (isFolderItem(currentSite)) {
+      if (window.ZenFolderWidget) {
+        await window.ZenFolderWidget.openFolderSite(currentSite);
+      }
+    } else {
+      createOrGetWebview(currentSite);
+    }
 
     syncWebviewVisibility();
     applyThemeAndEdge();
@@ -1494,6 +1648,19 @@
     }
 
     renderIconInto(headerSiteBadge, site);
+
+    if (isFolderItem(site)) {
+      const curDir = window.ZenFolderWidget?.currentPath || site.folderPath || '';
+      const curBase = extractFolderBaseName(curDir) || site.name;
+      const atRoot = String(curDir).toLowerCase() === String(site.folderPath || '').toLowerCase();
+      headerSiteName.textContent = atRoot ? site.name : `${site.name} › ${curBase}`;
+      headerSiteDomain.textContent = curDir || 'Yerel Klasör';
+      headerTitleBox.title = 'Klasör yolunu panoya kopyalamak için tıklayın';
+      updateHeaderNavButtons();
+      return;
+    }
+
+    headerTitleBox.title = 'Adresi düzenlemek veya gitmek için tıklayın';
     const unread = unreadMap.get(site.id);
     if (unread && unread.numeric > 0) {
       headerSiteName.textContent = unread.count === '•'
@@ -1517,6 +1684,11 @@
 
   function updateHeaderNavButtons() {
     const site = getActiveSite();
+    if (site && isFolderItem(site) && window.ZenFolderWidget) {
+      btnNavBack.disabled = !window.ZenFolderWidget.canGoBack();
+      btnNavForward.disabled = !window.ZenFolderWidget.canGoForward();
+      return;
+    }
     const wv = site ? webviewMap.get(site.id) : null;
     if (!wv) {
       btnNavBack.disabled = true;
@@ -1539,10 +1711,18 @@
     headerTitleBox.classList.remove('hidden');
   }
 
-  headerTitleBox.addEventListener('click', () => {
+  headerTitleBox.addEventListener('click', async () => {
     if (toolsViewOpen) return;
     const site = getActiveSite();
     if (!site) return;
+    if (isFolderItem(site)) {
+      const curDir = window.ZenFolderWidget?.currentPath || site.folderPath;
+      if (curDir) {
+        await window.sidebarAPI.writeClipboardText(curDir);
+        showToast('📋 Klasör yolu panoya kopyalandı');
+      }
+      return;
+    }
     const wv = webviewMap.get(site.id);
     inlineUrlInput.value = (wv && safeGetWebviewUrl(wv)) || site.url;
     headerTitleBox.classList.add('hidden');
@@ -1574,6 +1754,10 @@
   });
 
   btnNavBack.addEventListener('click', () => {
+    if (isActiveFolderOpen() && window.ZenFolderWidget) {
+      window.ZenFolderWidget.goBack();
+      return;
+    }
     const wv = activeSiteId ? webviewMap.get(activeSiteId) : null;
     if (wv) {
       try { if (wv.canGoBack()) wv.goBack(); } catch {}
@@ -1581,6 +1765,10 @@
   });
 
   btnNavForward.addEventListener('click', () => {
+    if (isActiveFolderOpen() && window.ZenFolderWidget) {
+      window.ZenFolderWidget.goForward();
+      return;
+    }
     const wv = activeSiteId ? webviewMap.get(activeSiteId) : null;
     if (wv) {
       try { if (wv.canGoForward()) wv.goForward(); } catch {}
@@ -1588,6 +1776,11 @@
   });
 
   btnNavReload.addEventListener('click', () => {
+    if (isActiveFolderOpen() && window.ZenFolderWidget) {
+      window.ZenFolderWidget.reloadCurrentDirectory();
+      showToast('Klasör içeriği yenilendi');
+      return;
+    }
     const wv = activeSiteId ? webviewMap.get(activeSiteId) : null;
     if (wv) wv.reload();
   });
@@ -1618,7 +1811,7 @@
         showToast('Bölünmüş görünüm kapatıldı');
         return;
       }
-      const candidates = config.sites.filter((s) => s.id !== activeSiteId);
+      const candidates = config.sites.filter((s) => s.id !== activeSiteId && !isFolderItem(s));
       if (candidates.length === 0) {
         showToast('Bölünmüş görünüm için ikinci bir site ekleyin');
         return;
@@ -1733,6 +1926,11 @@
   btnOpenEdge.addEventListener('click', () => {
     const site = getActiveSite();
     if (!site) return;
+    if (isFolderItem(site)) {
+      const targetDir = window.ZenFolderWidget?.currentPath || site.folderPath;
+      if (targetDir) window.sidebarAPI.openPath(targetDir);
+      return;
+    }
     const wv = webviewMap.get(site.id);
     const url = (wv && safeGetWebviewUrl(wv)) || site.url;
     window.sidebarAPI.openExternal(url, true);
@@ -1752,7 +1950,7 @@
   });
 
   btnCloseDrawer.addEventListener('click', (e) => {
-    if (e.shiftKey && activeSiteId && !toolsViewOpen) {
+    if (e.shiftKey && activeSiteId && !toolsViewOpen && !isActiveFolderOpen()) {
       unloadSiteWebview(activeSiteId);
       showToast('Sekme uyku moduna alındı (RAM boşaltıldı)');
       return;
@@ -2085,7 +2283,7 @@
     });
   }
 
-  // (+) Yeni Site Ekle butonuna URL sürüklenip bırakıldığında otomatik site ekleme penceresini doldur!
+  // (+) Yeni Site/Klasör Ekle butonuna URL veya Bilgisayar Klasörü sürüklenip bırakıldığında otomatik işle!
   btnRailAdd.addEventListener('dragover', (e) => {
     if (draggedSiteId !== null) return;
     e.preventDefault();
@@ -2102,6 +2300,18 @@
     e.preventDefault();
     e.stopPropagation();
     btnRailAdd.classList.remove('external-drop-target');
+
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      const nativePath = window.sidebarAPI.getFilePath(e.dataTransfer.files[0]);
+      if (nativePath) {
+        const st = await window.sidebarAPI.statPath(nativePath);
+        if (st.exists && st.isDirectory) {
+          await pinFolderDirectly(st.path, st.name);
+          return;
+        }
+      }
+    }
+
     const raw = (e.dataTransfer.getData('text/uri-list') || e.dataTransfer.getData('text/plain') || '').trim();
     if (raw) {
       await openSiteEditor(null, { url: normalizeUrl(raw, false) });
@@ -2170,7 +2380,8 @@
       await setActiveWorkspace(action.split(':')[1] || 'all');
       return;
     }
-    if (action === 'add-site') openSiteEditor(null);
+    if (action === 'add-site') openSiteEditor(null, { entryType: 'site' });
+    else if (action === 'add-folder') openSiteEditor(null, { entryType: 'folder' });
     else if (action === 'quick-snip') window.sidebarAPI.startQuickSnip();
     else if (action === 'open-tools') openToolsInDrawer();
     else if (action === 'display-text') await setDisplayMode('text');
@@ -2314,6 +2525,27 @@
       gradientSwatches.appendChild(sw);
     });
 
+    if (specialFoldersStrip) {
+      window.sidebarAPI.getSpecialFolders().then((folders) => {
+        if (!Array.isArray(folders)) return;
+        specialFoldersStrip.innerHTML = '';
+        folders.forEach((f) => {
+          const chip = document.createElement('button');
+          chip.type = 'button';
+          chip.className = 'template-chip';
+          chip.textContent = `${f.emoji} ${f.label}`;
+          chip.title = f.path;
+          chip.addEventListener('click', () => {
+            if (inputFolderPath) inputFolderPath.value = f.path;
+            inputSiteName.value = f.label;
+            nameManuallyEdited = true;
+            updateLivePreview();
+          });
+          specialFoldersStrip.appendChild(chip);
+        });
+      }).catch(() => {});
+    }
+
     if (glassTintGrid && Array.isArray(window.SIDEBAR_PRESETS.glassTints)) {
       glassTintGrid.innerHTML = '';
       window.SIDEBAR_PRESETS.glassTints.forEach((tint) => {
@@ -2388,7 +2620,119 @@
     btn.addEventListener('click', () => selectIconTab(btn.dataset.iconTab));
   });
 
+  function setFormEntryType(nextType, { preserveExistingIcon = false } = {}) {
+    formEntryType = nextType === 'folder' ? 'folder' : 'site';
+    const isFolder = formEntryType === 'folder';
+
+    if (entryTypeSwitcher) {
+      entryTypeSwitcher.querySelectorAll('[data-entry-type]').forEach((btn) => {
+        btn.classList.toggle('active', btn.dataset.entryType === formEntryType);
+      });
+    }
+
+    if (quickTemplatesSection) {
+      quickTemplatesSection.classList.toggle('hidden', isFolder || Boolean(editingSiteId));
+    }
+    if (siteUrlFieldGroup) {
+      siteUrlFieldGroup.classList.toggle('hidden', isFolder);
+    }
+    if (folderPickerFieldGroup) {
+      folderPickerFieldGroup.classList.toggle('hidden', !isFolder);
+    }
+    if (webAdvancedOptionsBox) {
+      webAdvancedOptionsBox.classList.toggle('hidden', isFolder);
+    }
+
+    const favTabBtn = document.querySelector('[data-icon-tab="favicon"]');
+    if (favTabBtn) {
+      favTabBtn.classList.toggle('hidden', isFolder);
+    }
+
+    if (!editingSiteId) {
+      studioModalTitle.textContent = isFolder
+        ? 'Yeni Klasör Sabitle & İkon Özelleştir'
+        : 'Yeni Site Ekle & İkon Özelleştir';
+      inputSiteName.placeholder = isFolder
+        ? 'örn: Masaüstü, İndirilenler, Projeler'
+        : 'örn: WhatsApp, Gemini';
+    }
+
+    if (!preserveExistingIcon) {
+      if (isFolder) {
+        formIconState.iconType = 'preset';
+        formIconState.iconValue = 'folder';
+        formIconState.iconBg = 'linear-gradient(135deg, #f59e0b, #d97706)';
+        selectIconTab('preset');
+      } else if (formIconState.iconType === 'preset' && formIconState.iconValue === 'folder') {
+        const autoGradient = window.SIDEBAR_PRESETS.gradients[config.sites.length % 7].value;
+        formIconState.iconType = 'favicon';
+        formIconState.iconValue = '';
+        formIconState.iconBg = autoGradient;
+        selectIconTab('favicon');
+      }
+    }
+
+    updateLivePreview();
+  }
+
+  if (entryTypeSwitcher) {
+    entryTypeSwitcher.querySelectorAll('[data-entry-type]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        setFormEntryType(btn.dataset.entryType);
+      });
+    });
+  }
+
+  if (btnBrowseFolder) {
+    btnBrowseFolder.addEventListener('click', async () => {
+      const res = await window.sidebarAPI.pickFolder();
+      if (!res.canceled && res.folderPath) {
+        if (inputFolderPath) inputFolderPath.value = res.folderPath;
+        if (!nameManuallyEdited || !inputSiteName.value.trim()) {
+          inputSiteName.value = res.folderName || extractFolderBaseName(res.folderPath);
+        }
+        updateLivePreview();
+      }
+    });
+  }
+
+  if (inputFolderPath) {
+    inputFolderPath.addEventListener('input', () => {
+      if (!editingSiteId && !nameManuallyEdited) {
+        const base = extractFolderBaseName(inputFolderPath.value);
+        if (base) inputSiteName.value = base;
+      }
+      updateLivePreview();
+    });
+  }
+
   function updateLivePreview() {
+    if (formEntryType === 'folder') {
+      const fPath = (inputFolderPath?.value || '').trim();
+      const dispName = inputSiteName.value.trim() || extractFolderBaseName(fPath) || 'Klasör';
+
+      previewTitleText.textContent = dispName;
+      previewUrlText.textContent = fPath || 'C:\\...';
+
+      if (previewTabText) previewTabText.textContent = dispName;
+      if (previewTabAccent) {
+        previewTabAccent.style.background =
+          formIconState.iconBg && formIconState.iconBg !== 'rgba(255, 255, 255, 0.09)'
+            ? formIconState.iconBg
+            : 'linear-gradient(135deg, #f59e0b, #d97706)';
+      }
+
+      renderIconInto(previewIconBox, {
+        type: 'folder',
+        name: dispName,
+        url: 'zen://folder',
+        iconType: formIconState.iconType,
+        iconValue: formIconState.iconValue || 'folder',
+        iconBg: formIconState.iconBg
+      });
+      return;
+    }
+
     const rawUrl = inputSiteUrl.value.trim();
     const normUrl = normalizeUrl(rawUrl);
     const dispName = inputSiteName.value.trim() || deriveNameFromUrl(rawUrl) || 'Whatsapp';
@@ -2489,11 +2833,14 @@
     const existing = siteId ? config.sites.find((s) => s.id === siteId) : null;
 
     if (existing) {
+      const existingIsFolder = isFolderItem(existing);
+      if (entryTypeSwitcher) entryTypeSwitcher.classList.add('hidden');
       studioModalTitle.textContent = `${existing.name} — Düzenle & İkon Özelleştir`;
       quickTemplatesSection.classList.add('hidden');
       btnDeleteSite.classList.remove('hidden');
 
-      inputSiteUrl.value = existing.url;
+      inputSiteUrl.value = existingIsFolder ? '' : (existing.url || '');
+      if (inputFolderPath) inputFolderPath.value = existingIsFolder ? (existing.folderPath || '') : '';
       inputSiteName.value = existing.name;
       if (inputSiteWorkspace) inputSiteWorkspace.value = existing.workspace || 'general';
       inputMobileMode.checked = Boolean(existing.mobileMode);
@@ -2504,26 +2851,33 @@
       zoomValueLabel.textContent = `%${zoomPct}`;
 
       formIconState = {
-        iconType: existing.iconType || 'favicon',
-        iconValue: existing.iconValue || '',
-        iconBg: existing.iconBg || window.SIDEBAR_PRESETS.gradients[0].value
+        iconType: existing.iconType || (existingIsFolder ? 'preset' : 'favicon'),
+        iconValue: existing.iconValue || (existingIsFolder ? 'folder' : ''),
+        iconBg: existing.iconBg || (existingIsFolder
+          ? 'linear-gradient(135deg, #f59e0b, #d97706)'
+          : window.SIDEBAR_PRESETS.gradients[0].value)
       };
 
       inputMonogram.value = existing.iconType === 'monogram' ? (existing.iconValue || '') : '';
       inputCustomIconUrl.value = existing.iconType === 'custom' ? (existing.iconValue || '') : '';
+      setFormEntryType(existingIsFolder ? 'folder' : 'site', { preserveExistingIcon: true });
       selectIconTab(formIconState.iconType);
     } else {
-      studioModalTitle.textContent = 'Yeni Site Ekle & İkon Özelleştir';
-      quickTemplatesSection.classList.remove('hidden');
+      if (entryTypeSwitcher) entryTypeSwitcher.classList.remove('hidden');
+      const startAsFolder = prefill?.entryType === 'folder' || Boolean(prefill?.folderPath);
       btnDeleteSite.classList.add('hidden');
 
       inputSiteUrl.value = prefill?.url || '';
-      inputSiteName.value = prefill?.title || (prefill?.url ? deriveNameFromUrl(prefill.url) : '');
+      if (inputFolderPath) inputFolderPath.value = prefill?.folderPath || '';
+      inputSiteName.value =
+        prefill?.title ||
+        (prefill?.folderPath ? extractFolderBaseName(prefill.folderPath) : '') ||
+        (prefill?.url ? deriveNameFromUrl(prefill.url) : '');
       nameManuallyEdited = Boolean(inputSiteName.value);
       const curActiveWs = config.settings.activeWorkspace;
       const defaultWs = (curActiveWs && curActiveWs !== 'all')
         ? curActiveWs
-        : inferWorkspaceFromUrlOrName(prefill?.url || '', inputSiteName.value);
+        : (startAsFolder ? 'general' : inferWorkspaceFromUrlOrName(prefill?.url || '', inputSiteName.value));
       if (inputSiteWorkspace) inputSiteWorkspace.value = defaultWs;
       workspaceManuallyEdited = Boolean(curActiveWs && curActiveWs !== 'all');
 
@@ -2535,19 +2889,33 @@
       inputMonogram.value = '';
       inputCustomIconUrl.value = '';
 
-      const autoGradient = window.SIDEBAR_PRESETS.gradients[config.sites.length % 7].value;
-      formIconState = {
-        iconType: 'favicon',
-        iconValue: '',
-        iconBg: autoGradient
-      };
-      selectIconTab('favicon');
+      if (startAsFolder) {
+        formIconState = {
+          iconType: 'preset',
+          iconValue: 'folder',
+          iconBg: 'linear-gradient(135deg, #f59e0b, #d97706)'
+        };
+        setFormEntryType('folder', { preserveExistingIcon: true });
+        selectIconTab('preset');
+      } else {
+        const autoGradient = window.SIDEBAR_PRESETS.gradients[config.sites.length % 7].value;
+        formIconState = {
+          iconType: 'favicon',
+          iconValue: '',
+          iconBg: autoGradient
+        };
+        setFormEntryType('site', { preserveExistingIcon: true });
+        selectIconTab('favicon');
+      }
     }
 
     siteModal.classList.remove('hidden');
     renderRail();
     await syncWindowMode();
-    setTimeout(() => inputSiteUrl.focus(), 60);
+    setTimeout(() => {
+      if (formEntryType === 'folder') inputFolderPath?.focus();
+      else inputSiteUrl.focus();
+    }, 60);
   }
 
   async function closeAllStudios(sync = true) {
@@ -2564,8 +2932,104 @@
 
   siteForm.addEventListener('submit', async (e) => {
     e.preventDefault();
+
+    // 1) BİLGİSAYAR KLASÖRÜ KAYDETME / GÜNCELLEME
+    if (formEntryType === 'folder') {
+      const rawFolderPath = (inputFolderPath?.value || '').trim();
+      if (!rawFolderPath) {
+        showToast('⚠️ Lütfen bir klasör seçin veya yolunu girin');
+        inputFolderPath?.focus();
+        return;
+      }
+      const st = await window.sidebarAPI.statPath(rawFolderPath);
+      if (!st.exists || !st.isDirectory) {
+        showToast('⚠️ Seçilen klasör bulunamadı — geçerli bir klasör seçin');
+        inputFolderPath?.focus();
+        return;
+      }
+
+      const finalFolderPath = st.path;
+      const finalName = inputSiteName.value.trim() || st.name || extractFolderBaseName(finalFolderPath) || 'Klasör';
+      const chosenWs = inputSiteWorkspace ? inputSiteWorkspace.value : 'general';
+
+      let finalIconType = formIconState.iconType === 'favicon' ? 'preset' : formIconState.iconType;
+      let finalIconVal = formIconState.iconValue;
+      if (finalIconType === 'monogram') {
+        finalIconVal = inputMonogram.value.trim() || getMonogramFallback(finalName);
+      } else if (finalIconType === 'custom') {
+        finalIconVal = inputCustomIconUrl.value.trim();
+        if (!finalIconVal) {
+          finalIconType = 'preset';
+          finalIconVal = 'folder';
+        }
+      } else if (!finalIconVal) {
+        finalIconVal = 'folder';
+      }
+
+      if (config.settings.activeWorkspace !== 'all' && config.settings.activeWorkspace !== chosenWs) {
+        config = await window.sidebarAPI.updateSettings({ activeWorkspace: chosenWs });
+      }
+
+      if (editingSiteId) {
+        const idx = config.sites.findIndex((s) => s.id === editingSiteId);
+        if (idx !== -1) {
+          const old = config.sites[idx];
+          const updatedFolder = {
+            ...old,
+            type: 'folder',
+            name: finalName,
+            url: 'zen://folder',
+            folderPath: finalFolderPath,
+            workspace: chosenWs,
+            iconType: finalIconType,
+            iconValue: finalIconVal,
+            iconBg: formIconState.iconBg,
+            keepAwake: false
+          };
+          config.sites[idx] = updatedFolder;
+          config = await window.sidebarAPI.updateSites(config.sites);
+          if (window.ZenFolderWidget?.historyBySite) {
+            window.ZenFolderWidget.historyBySite.delete(updatedFolder.id);
+          }
+          await closeAllStudios(false);
+          await openSiteInDrawer(updatedFolder.id);
+          showToast(`📁 "${finalName}" klasörü güncellendi`);
+          return;
+        }
+      }
+
+      const newFolder = {
+        id: `folder-${Date.now().toString(36)}`,
+        type: 'folder',
+        name: finalName,
+        url: 'zen://folder',
+        folderPath: finalFolderPath,
+        workspace: chosenWs,
+        iconType: finalIconType,
+        iconValue: finalIconVal,
+        iconBg: formIconState.iconBg,
+        mobileMode: false,
+        keepAwake: false,
+        isolatedSession: false,
+        zoom: 1.0,
+        customWidth: null
+      };
+
+      config.sites.push(newFolder);
+      config = await window.sidebarAPI.updateSites(config.sites);
+      await closeAllStudios(false);
+      await openSiteInDrawer(newFolder.id);
+      showToast(`📁 "${finalName}" klasörü Zen Side'a eklendi`);
+      return;
+    }
+
+    // 2) WEB SİTESİ KAYDETME / GÜNCELLEME
     const normUrl = normalizeUrl(inputSiteUrl.value);
-    if (!normUrl) return;
+    if (!normUrl) {
+      showToast('⚠️ Geçerli bir web sitesi adresi girin');
+      inputSiteUrl.focus();
+      return;
+    }
 
     const finalName = inputSiteName.value.trim() || deriveNameFromUrl(normUrl) || 'Web Sitesi';
     const zoomFactor = Number(inputSiteZoom.value || 100) / 100;
@@ -2990,6 +3454,10 @@
         closeInlineUrlBar();
         return;
       }
+      if (window.ZenFolderWidget?.currentPreviewData) {
+        window.ZenFolderWidget.closePreview();
+        return;
+      }
       if (isStudioOpen()) {
         closeAllStudios(true);
         return;
@@ -3121,7 +3589,12 @@
 
       case 'open-add-modal':
         railTemporarilyRevealed = true;
-        await openSiteEditor(null);
+        await openSiteEditor(null, { entryType: 'site' });
+        break;
+
+      case 'open-add-folder-modal':
+        railTemporarilyRevealed = true;
+        await openSiteEditor(null, { entryType: 'folder' });
         break;
 
       case 'open-settings-modal':
@@ -3185,6 +3658,43 @@
             ? `⏱️ Pomodoro Çalışıyor (${formattedTime}) — Mini Araçları Aç`
             : '0-RAM Yerleşik Mini Araçlar (Notlar • Pano Geçmişi • Hesap & Kur • Pomodoro)';
         }
+      }
+    });
+  }
+
+  if (window.ZenFolderWidget) {
+    window.ZenFolderWidget.init({
+      getConfig: () => config,
+      setConfig: (nextCfg) => {
+        if (nextCfg) config = nextCfg;
+      },
+      showToast,
+      pinFolderDirectly,
+      openFolderEditor: (siteId) => openSiteEditor(siteId),
+      onDirectoryChanged: () => {
+        if (isActiveFolderOpen()) {
+          updateHeaderUI();
+        }
+      },
+      sendFileToSite: async (targetSiteId, item) => {
+        const targetSite = config.sites.find((s) => s.id === targetSiteId && !isFolderItem(s));
+        if (!targetSite) return;
+        let copiedImage = false;
+        if (item.category === 'image') {
+          copiedImage = await window.sidebarAPI.copyImageFile(item.path);
+        } else {
+          const prev = await window.sidebarAPI.previewFile(item.path);
+          if (prev.ok && prev.kind === 'text') {
+            await window.sidebarAPI.writeClipboardText(`--- ${item.name} ---\n${prev.content}`);
+          } else {
+            await window.sidebarAPI.writeClipboardText(item.path);
+          }
+        }
+        closeAllStudios(false);
+        await openSiteInDrawer(targetSite.id);
+        const wv = createOrGetWebview(targetSite);
+        pasteClipboardIntoWebview(wv, copiedImage);
+        showToast(`"${item.name}" → ${targetSite.name} sekmesine aktarıldı`);
       }
     });
   }

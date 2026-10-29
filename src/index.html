@@ -238,7 +238,71 @@
         </div>
       </section>
 
-      <!-- STÜDYO 1: SİTE EKLEME & İKON ÖZELLEŞTİRME PANELİ -->
+      <!-- 0-RAM YERLEŞİK KLASÖR & DOSYA GEZGİNİ SAHNESİ -->
+      <section id="folder-stage" class="hidden" aria-label="Zen Side Klasör ve Dosya Gezgini">
+        <!-- Üst Gezinti & Ekmek Kırıntısı (Breadcrumb) Çubuğu -->
+        <div class="folder-nav-bar">
+          <button type="button" class="folder-icon-btn" id="btn-folder-root" title="Sabitlenen Ana Klasöre Dön">🏠</button>
+          <button type="button" class="folder-icon-btn" id="btn-folder-up" title="Üst Klasöre Çık">⬆</button>
+          <div id="folder-breadcrumbs" class="folder-breadcrumbs"></div>
+          <button type="button" class="secondary-btn compact-btn" id="btn-folder-new" title="Bu Klasörün İçinde Yeni Klasör Oluştur">+ Klasör</button>
+          <button type="button" class="folder-icon-btn" id="btn-folder-explorer" title="Windows Dosya Gezgininde Aç">🗂</button>
+        </div>
+
+        <!-- Satır İçi Yeni Klasör / Yeniden Adlandırma Çubuğu -->
+        <div id="folder-inline-prompt" class="folder-inline-prompt hidden">
+          <span id="folder-prompt-label" class="folder-prompt-label">Yeni Klasör:</span>
+          <input type="text" id="folder-prompt-input" class="text-input compact-input flex-1" maxlength="120" autocomplete="off" />
+          <button type="button" class="primary-btn compact-btn" id="btn-folder-prompt-ok">Tamam</button>
+          <button type="button" class="secondary-btn compact-btn" id="btn-folder-prompt-cancel">İptal</button>
+        </div>
+
+        <!-- Arama, Sıralama ve Liste/Izgara Görünüm Çubuğu -->
+        <div class="folder-filter-bar">
+          <input
+            type="text"
+            id="folder-search-input"
+            class="text-input compact-input flex-1"
+            placeholder="🔍 Klasör veya dosya ara..."
+            autocomplete="off"
+          />
+          <select id="folder-sort-select" class="text-input compact-input folder-sort-select" title="Sıralama Ölçütü">
+            <option value="name">Ad (A-Z)</option>
+            <option value="date">Tarih (Yeni)</option>
+            <option value="size">Boyut</option>
+            <option value="type">Tür</option>
+          </select>
+          <button type="button" class="folder-icon-btn" id="btn-folder-view-toggle" title="Liste / Izgara Görünümü Değiştir">☰</button>
+          <button type="button" class="folder-icon-btn" id="btn-folder-hidden-toggle" title="Gizli Dosyaları Göster / Gizle">👁</button>
+        </div>
+
+        <!-- Alt Klasörler ve Dosyalar Listesi / Izgarası -->
+        <div id="folder-items-container" class="folder-items-container view-list"></div>
+
+        <!-- Satır İçi Hızlı Dosya Önizleme Katmanı (Görsel / Metin / Kod) -->
+        <div id="folder-preview-overlay" class="folder-preview-overlay hidden">
+          <div class="folder-preview-header">
+            <div class="folder-preview-titles">
+              <div id="folder-preview-title" class="folder-preview-title">Dosya</div>
+              <div id="folder-preview-meta" class="folder-preview-meta"></div>
+            </div>
+            <div class="folder-preview-actions">
+              <button type="button" class="secondary-btn compact-btn" id="btn-folder-preview-copy">📋 Kopyala</button>
+              <button type="button" class="primary-btn compact-btn" id="btn-folder-preview-open">🚀 Aç</button>
+              <button type="button" class="hdr-btn close-btn" id="btn-folder-preview-close" title="Önizlemeyi Kapat">✕</button>
+            </div>
+          </div>
+          <div id="folder-preview-body" class="folder-preview-body"></div>
+        </div>
+
+        <!-- Alt Durum Çubuğu -->
+        <div class="folder-status-bar">
+          <span id="folder-stats-label">0 klasör • 0 dosya</span>
+          <span class="muted">Dosya sürükle-bırak destekli</span>
+        </div>
+      </section>
+
+      <!-- STÜDYO 1: SİTE VEYA KLASÖR EKLEME & İKON ÖZELLEŞTİRME PANELİ -->
       <div id="studio-site-modal" class="studio-overlay hidden">
         <div class="studio-header">
           <h2 id="studio-modal-title">Yeni Site Ekle & Sekme Özelleştir</h2>
@@ -264,24 +328,48 @@
             </div>
           </div>
 
-          <!-- Hızlı Doldurma Şablonları -->
+          <!-- Tür Seçici: Web Sitesi mi, Bilgisayar Klasörü mü? -->
+          <div class="segmented full-seg" id="entry-type-switcher">
+            <button type="button" class="seg-btn active" data-entry-type="site">🌐 Web Sitesi / Uygulama</button>
+            <button type="button" class="seg-btn" data-entry-type="folder">📁 Bilgisayar Klasörü</button>
+          </div>
+
+          <!-- Hızlı Doldurma Şablonları (Web Sitesi Modu) -->
           <div class="field-group" id="quick-templates-section">
             <label class="field-label">Hızlı Şablonlar <span class="muted">(İsteğe bağlı tek tıkla doldur)</span></label>
             <div id="quick-templates-strip" class="chips-strip"></div>
           </div>
 
-          <!-- URL, İsim ve Çalışma Alanı -->
-          <div class="field-group">
+          <!-- URL Alanı (Web Sitesi Modu) -->
+          <div class="field-group" id="site-url-field-group">
             <label class="field-label" for="input-site-url">Web Sitesi Adresi (URL)</label>
             <input
               type="text"
               id="input-site-url"
               class="text-input"
               placeholder="örn: web.whatsapp.com veya https://chatgpt.com"
-              required
               autocomplete="off"
               spellcheck="false"
             />
+          </div>
+
+          <!-- Klasör Seçici Alanı (Bilgisayar Klasörü Modu) -->
+          <div class="field-group hidden" id="folder-picker-field-group">
+            <label class="field-label">Hızlı Sistem Klasörleri <span class="muted">(Tek tıkla seç)</span></label>
+            <div id="special-folders-strip" class="chips-strip"></div>
+
+            <label class="field-label mt-8" for="input-folder-path">Sabitlenecek Klasör Yolu</label>
+            <div class="folder-pick-row">
+              <input
+                type="text"
+                id="input-folder-path"
+                class="text-input flex-1"
+                placeholder="örn: C:\Users\Kullanici\Desktop veya Gözat ile seçin"
+                autocomplete="off"
+                spellcheck="false"
+              />
+              <button type="button" class="primary-btn" id="btn-browse-folder">📂 Gözat…</button>
+            </div>
           </div>
 
           <div class="two-col-fields">
@@ -371,8 +459,8 @@
             </div>
           </div>
 
-          <!-- Gelişmiş Görünüm Seçenekleri -->
-          <div class="field-group advanced-box">
+          <!-- Gelişmiş Görünüm Seçenekleri (Yalnızca Web Siteleri İçin) -->
+          <div class="field-group advanced-box" id="web-advanced-options-box">
             <label class="toggle-row">
               <div>
                 <div class="toggle-title">Mobil Uyumlu Görünüm</div>
@@ -667,9 +755,9 @@
       <!-- Sürükle-Bırak Destekli Sekme Kulesi -->
       <div id="app-tower" class="rail-apps-list"></div>
 
-      <!-- Yeni Site Ekle (+) -->
+      <!-- Yeni Site veya Klasör Ekle (+) -->
       <div class="rail-add-wrap">
-        <button type="button" id="btn-rail-add" class="rail-action-btn add-accent" title="Yeni Site Ekle (+) — Bağlantı sürükleyip bırakabilirsiniz">
+        <button type="button" id="btn-rail-add" class="rail-action-btn add-accent" title="Yeni Site veya Klasör Ekle (+) — Bağlantı ya da klasör sürükleyip bırakabilirsiniz">
           <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         </button>
       </div>
@@ -704,6 +792,7 @@
 
   <script src="icons-data.js"></script>
   <script src="tools-widget.js"></script>
+  <script src="folder-widget.js"></script>
   <script src="renderer.js"></script>
 </body>
 </html>

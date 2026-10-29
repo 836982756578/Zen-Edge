@@ -1,21 +1,31 @@
-# Zen Side v2.0 — Windows 10/11 Akıllı Masaüstü Kenar Çubuğu
+# Zen Side v2.1 — Windows 10/11 Akıllı Masaüstü Kenar Çubuğu
 
-![Version](https://img.shields.io/badge/S%C3%BCr%C3%BCm-v2.0.1-6366F1)
+![Version](https://img.shields.io/badge/S%C3%BCr%C3%BCm-v2.1.0-6366F1)
 ![Platform](https://img.shields.io/badge/Platform-Windows%2010%20%7C%2011-0078D4?logo=windows)
 ![Electron](https://img.shields.io/badge/Chromium-134%20%2F%20Electron%2035-47848F?logo=electron)
 ![Win32 DWM](https://img.shields.io/badge/Win32-DWM%20Mica%20%26%20AppBar-8B5CF6)
 ![AdBlock](https://img.shields.io/badge/AdBlock-Dahili%20A%C4%9F%20Kalkan%C4%B1-10B981)
 ![License](https://img.shields.io/badge/Lisans-MIT-22C55E)
 
-**Zen Side**, Windows 10 ve Windows 11 masaüstünüze **donanım hızlandırmalı Windows 11 Mica & iOS Buzlu Cam (Acrylic)**, **Çift Sekme Bölünmüş Görünüm (Split-View)**, **Sürükle & Bırak Süper Gücü**, **0-RAM Yerleşik Mini Araçlar**, **Dahili Reklam & İzleyici Engelleyici**, **Ekran Görüntüsü Kırp & Yapay Zekaya Sor (`✂️`)**, **Çoklu Monitör & Çalışma Alanları** ve **Canlı WhatsApp Bildirim Rozetleri** kazandıran açık kaynaklı, ultra ince masaüstü kenar çubuğudur.
+**Zen Side**, Windows 10 ve Windows 11 masaüstünüze **donanım hızlandırmalı Windows 11 Mica & iOS Buzlu Cam (Acrylic)**, **Klasör Sabitleme & 0-RAM Yerleşik Klasör/Dosya Gezgini**, **Çift Sekme Bölünmüş Görünüm (Split-View)**, **Sürükle & Bırak Süper Gücü**, **0-RAM Yerleşik Mini Araçlar**, **Dahili Reklam & İzleyici Engelleyici**, **Ekran Görüntüsü Kırp & Yapay Zekaya Sor (`✂️`)**, **Çoklu Monitör & Çalışma Alanları** ve **Canlı WhatsApp Bildirim Rozetleri** kazandıran açık kaynaklı, ultra ince masaüstü kenar çubuğudur.
 
 > **Geliştirici:** Serkan ŞENTÜRK (`sL.`) — [github.com/836982756578/Zen-Side](https://github.com/836982756578/Zen-Side)
 
 ---
 
-## 🌟 Zen Side v2.0 Öne Çıkan Özellikler
+## 🌟 Zen Side v2.1 Öne Çıkan Özellikler
 
-### 1. ⬒ Çift Sekme Bölünmüş Görünüm (Split-View / Alt-Üst İki Uygulama)
+### 1. 📁 Klasör Sabitleme & 0-RAM Yerleşik Klasör / Dosya Gezgini
+- Bilgisayarınızdaki herhangi bir klasörü (**Masaüstü, İndirilenler, Belgeler, Resimler, Proje klasörleri vb.**) tıpkı bir web sekmesi gibi kenar çubuğuna sabitleyebilirsiniz:
+  - Şeritteki **`+`** butonuna tıklayıp **📁 Bilgisayar Klasörü** sekmesinden seçerek (veya tek tıkla hazır sistem klasörü yongalarını kullanarak),
+  - Şeride ya da sistem tepsisine sağ tıklayıp **📁 Klasör Ekle (+)** diyerek,
+  - Veya Dosya Gezgini'nden bir klasörü doğrudan şeritteki **`+`** butonunun üzerine **sürükleyip bırakarak** anında sabitleyebilirsiniz.
+- **0-RAM Yerel Klasör & Dosya Gezgini:** Sabitlenen klasöre tıkladığınızda webview başlatmadan içindeki tüm alt klasörler ve dosyalar **gerçek Windows 11 sistem dosya ikonları** ve **görsel küçük resimleriyle (thumbnails)** listelenir:
+  - Ekmek kırıntısı (**Breadcrumb**) gezintisi, İleri / Geri / Üst Klasör (`⬆`) / Ana Klasör (`🏠`), anlık dosya arama, Sıralama (*Ad / Tarih / Boyut / Tür*), **Liste (`☰`) & Izgara (`⊞`)** görünümü ve gizli dosya filtresi (`👁`).
+  - **Satır İçi Hızlı Önizleme (`👁`):** Görselleri ve kod/metin dosyalarını dış uygulama açmadan panel içinde anında önizleyin.
+  - **Çift Yönlü Sürükle & Bırak ve AI Entegrasyonu:** Dışarıdan klasör içine veya şeritteki klasör sekmesinin üzerine dosya sürükleyip kopyalayın; içerideki dosyaları sürükleyip **WhatsApp, Edge, Masaüstü** veya başka programlara bırakın; sağ tık menüsünden görsel/metin dosyalarını tek tıkla **✨ Gemini / 💬 WhatsApp sekmesine gönderin**, yeni alt klasör oluşturun, yeniden adlandırın veya Geri Dönüşüm Kutusu'na taşıyın.
+
+### 2. ⬒ Çift Sekme Bölünmüş Görünüm (Split-View / Alt-Üst İki Uygulama)
 - Kenar çubuğu açıkken paneli **üstte WhatsApp, altta Gemini veya Çeviri** olacak şekilde aynı anda ikiye bölebilirsiniz.
 - **Sıfır Yeniden Yükleme Mimarisi:** Web görünümleri yeniden oluşturulmaz; açık oturumunuz kesilmeden anında bölünür.
 - Ortadaki sürükleme çubuğundan üst/alt yükseklik oranını istediğiniz gibi ayarlayabilir (hafızaya alınır), tek tuşla panelleri yer değiştirebilir (`⇅`) veya şeritteki herhangi bir sekmeye **`Shift + Sol Tık`** (ya da sağ tık → *Alt Bölmede Aç*) yaparak alt bölmeye gönderebilirsiniz.
@@ -124,6 +134,7 @@ Zen-Side/
 │   ├── styles.css            # Mica/iOS cam temaları, Split-View, Mini Araçlar ve bildirim rozeti stilleri
 │   ├── renderer.js           # Split-View, Sürükle-Bırak yönlendirici, otomatik uyku ve bildirim motoru
 │   ├── tools-widget.js       # 0-RAM Yapışkan Notlar, Pano Geçmişi, Hesap/Kur Çevirici ve Pomodoro
+│   ├── folder-widget.js      # 0-RAM Yerleşik Klasör & Dosya Gezgini (Breadcrumb, önizleme, sürükle-bırak)
 │   ├── snip.html             # Tam ekran HiDPI ekran görüntüsü kırpma ve AI gönderim arayüzü
 │   ├── snip-preload.js       # Quick Snip penceresi güvenli IPC köprüsü
 │   └── icons-data.js         # Vektör ikon galerisi, iOS/Mica cam paletleri ve hazır site şablonları

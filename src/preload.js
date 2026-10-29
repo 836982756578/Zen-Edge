@@ -22,6 +22,22 @@ contextBridge.exposeInMainWorld('sidebarAPI', {
   writeClipboardText: (text) => ipcRenderer.invoke('sidebar:write-clipboard-text', text),
   copyImageDataUrl: (dataUrl) => ipcRenderer.invoke('sidebar:copy-image-dataurl', dataUrl),
   copyImageFile: (filePath) => ipcRenderer.invoke('sidebar:copy-image-file', filePath),
+
+  // Klasör Sabitleme & Yerleşik Klasör/Dosya Gezgini API'leri
+  getSpecialFolders: () => ipcRenderer.invoke('sidebar:get-special-folders'),
+  pickFolder: () => ipcRenderer.invoke('sidebar:pick-folder'),
+  statPath: (targetPath) => ipcRenderer.invoke('sidebar:stat-path', targetPath),
+  readDirectory: (opts) => ipcRenderer.invoke('sidebar:read-directory', opts),
+  openPath: (targetPath) => ipcRenderer.invoke('sidebar:open-path', targetPath),
+  revealInExplorer: (targetPath) => ipcRenderer.invoke('sidebar:reveal-in-explorer', targetPath),
+  createSubfolder: (opts) => ipcRenderer.invoke('sidebar:create-subfolder', opts),
+  renameFsItem: (opts) => ipcRenderer.invoke('sidebar:rename-fs-item', opts),
+  trashFsItem: (targetPath) => ipcRenderer.invoke('sidebar:trash-fs-item', targetPath),
+  copyFilesIntoFolder: (opts) => ipcRenderer.invoke('sidebar:copy-files-into-folder', opts),
+  previewFile: (targetPath) => ipcRenderer.invoke('sidebar:preview-file', targetPath),
+  showFolderItemContextMenu: (info) => ipcRenderer.invoke('sidebar:folder-item-context-menu', info),
+  startNativeFileDrag: (targetPath) => ipcRenderer.send('sidebar:start-native-drag', targetPath),
+
   getFilePath: (file) => {
     try {
       return webUtils && typeof webUtils.getPathForFile === 'function'

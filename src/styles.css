@@ -2313,3 +2313,483 @@ body.is-split-resizing .split-drag-pill {
   color: var(--text-secondary);
   padding-top: 4px;
 }
+
+
+/* ==================== 10) YERLEŞİK KLASÖR & DOSYA GEZGİNİ SAHNESİ ==================== */
+
+.folder-pick-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#folder-stage {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  background: transparent;
+}
+
+.folder-nav-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px 6px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: rgba(15, 23, 42, 0.22);
+}
+
+html[data-theme="light"] .folder-nav-bar {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.folder-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  font-size: 13px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.14s ease, border-color 0.14s ease, transform 0.1s ease;
+}
+
+.folder-icon-btn:hover:not(:disabled) {
+  background: var(--bg-hover);
+  border-color: var(--border-strong);
+}
+
+.folder-icon-btn.active {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent-glow);
+}
+
+.folder-icon-btn:disabled {
+  opacity: 0.38;
+  cursor: default;
+}
+
+.folder-breadcrumbs {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 2px 4px;
+  border-radius: 7px;
+  background: rgba(15, 23, 42, 0.18);
+  border: 1px solid var(--border-subtle);
+}
+
+.folder-breadcrumbs::-webkit-scrollbar {
+  display: none;
+}
+
+html[data-theme="light"] .folder-breadcrumbs {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.folder-crumb {
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 3px 6px;
+  border-radius: 5px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.folder-crumb:last-child {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.folder-crumb:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.folder-crumb-sep {
+  color: var(--text-muted);
+  font-size: 12px;
+  user-select: none;
+}
+
+.folder-inline-prompt {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 10px;
+  background: var(--accent-soft);
+  border-bottom: 1px solid var(--accent);
+}
+
+.folder-prompt-label {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.folder-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.folder-sort-select {
+  width: 108px;
+  flex-shrink: 0;
+}
+
+.folder-items-container {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 8px 10px;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.folder-items-container.folder-drop-active {
+  background: rgba(16, 185, 129, 0.09);
+  box-shadow: inset 0 0 0 2px rgba(16, 185, 129, 0.65);
+}
+
+/* Liste Görünümü */
+.folder-items-container.view-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.folder-items-container.view-list .folder-entry {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 9px;
+  border-radius: 9px;
+  border: 1px solid transparent;
+  background: rgba(255, 255, 255, 0.03);
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.13s ease, border-color 0.13s ease, transform 0.08s ease;
+}
+
+html[data-theme="light"] .folder-items-container.view-list .folder-entry {
+  background: rgba(255, 255, 255, 0.45);
+}
+
+.folder-entry:hover {
+  background: var(--bg-hover) !important;
+  border-color: var(--border-strong) !important;
+}
+
+.folder-entry.is-dir:hover {
+  border-color: rgba(245, 158, 11, 0.45) !important;
+}
+
+.folder-entry-visual {
+  width: 32px;
+  height: 32px;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.native-folder-svg {
+  width: 26px;
+  height: 26px;
+  filter: drop-shadow(0 2px 4px rgba(245, 158, 11, 0.25));
+}
+
+.folder-thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.folder-sys-icon {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}
+
+.folder-fallback-emoji {
+  font-size: 18px;
+}
+
+.folder-entry-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.folder-entry-name {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.folder-entry.is-dir .folder-entry-name {
+  font-weight: 700;
+}
+
+.folder-entry-meta {
+  font-size: 10.8px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.folder-entry-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+
+.folder-entry:hover .folder-entry-actions {
+  opacity: 1;
+}
+
+.folder-mini-btn {
+  width: 25px;
+  height: 25px;
+  border-radius: 6px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  font-size: 12px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+.folder-mini-btn:hover {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+/* Izgara (Grid) Görünümü */
+.folder-items-container.view-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: 8px;
+  align-content: start;
+}
+
+.folder-items-container.view-grid .folder-entry {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 6px;
+  padding: 10px 8px 8px;
+  border-radius: 11px;
+  border: 1px solid var(--border-subtle);
+  background: rgba(255, 255, 255, 0.035);
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.13s ease, border-color 0.13s ease;
+}
+
+html[data-theme="light"] .folder-items-container.view-grid .folder-entry {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.folder-items-container.view-grid .folder-entry-visual {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+}
+
+.folder-items-container.view-grid .native-folder-svg {
+  width: 40px;
+  height: 40px;
+}
+
+.folder-items-container.view-grid .folder-sys-icon {
+  width: 30px;
+  height: 30px;
+}
+
+.folder-items-container.view-grid .folder-entry-info {
+  width: 100%;
+}
+
+.folder-items-container.view-grid .folder-entry-name {
+  font-size: 11.5px;
+  white-space: normal;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-height: 1.28;
+}
+
+.folder-items-container.view-grid .folder-entry-meta {
+  font-size: 10px;
+}
+
+.folder-items-container.view-grid .folder-entry-actions {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+}
+
+/* Boş / Hata Durumu */
+.folder-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 8px;
+  padding: 40px 20px;
+  color: var(--text-secondary);
+}
+
+.folder-empty-emoji {
+  font-size: 32px;
+}
+
+.folder-empty-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.folder-empty-desc {
+  font-size: 11.8px;
+  color: var(--text-muted);
+  max-width: 260px;
+  line-height: 1.45;
+}
+
+/* Satır İçi Hızlı Dosya Önizleme (Görsel / Metin) */
+.folder-preview-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  background: rgba(11, 16, 28, 0.96);
+  backdrop-filter: blur(18px);
+}
+
+html[data-theme="light"] .folder-preview-overlay {
+  background: rgba(248, 250, 252, 0.96);
+}
+
+.folder-preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.folder-preview-titles {
+  min-width: 0;
+  flex: 1;
+}
+
+.folder-preview-title {
+  font-size: 12.8px;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.folder-preview-meta {
+  font-size: 10.8px;
+  color: var(--text-muted);
+}
+
+.folder-preview-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.folder-preview-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 12px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.folder-preview-img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 10px;
+  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.35);
+  margin: auto;
+}
+
+.folder-preview-code {
+  width: 100%;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 9px;
+  border: 1px solid var(--border-subtle);
+  background: rgba(15, 23, 42, 0.55);
+  color: var(--text-primary);
+  font-family: "Cascadia Code", Consolas, monospace;
+  font-size: 11.5px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+html[data-theme="light"] .folder-preview-code {
+  background: rgba(241, 245, 249, 0.9);
+}
+
+.folder-status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 12px;
+  border-top: 1px solid var(--border-subtle);
+  font-size: 11px;
+  color: var(--text-secondary);
+}

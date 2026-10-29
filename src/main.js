@@ -16,6 +16,7 @@ const {
 } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const { pathToFileURL } = require('url');
 const { spawn } = require('child_process');
 
 // Otomatik gizli (ekran dışı / saydam) moddayken WhatsApp vb. arka plan sekmelerinin canlı bildirim almaya devam etmesi için
@@ -848,6 +849,15 @@ function buildTrayMenu() {
         mainWindow.show();
         mainWindow.focus();
         sendEventToRenderer({ type: 'open-add-modal' });
+      }
+    },
+    {
+      label: '📁 Klasör Ekle (+)',
+      click: () => {
+        if (!mainWindow) return;
+        mainWindow.show();
+        mainWindow.focus();
+        sendEventToRenderer({ type: 'open-add-folder-modal' });
       }
     },
     { type: 'separator' },
@@ -1708,6 +1718,521 @@ ipcMain.handle('sidebar:quit', () => {
   app.quit();
 });
 
+// ================= KLASÖR SABİTLEME & YERLEŞİK KLASÖR/DOSYA GEZGİNİ IPC =================
+
+const fileExtIconCache = new Map();
+
+function classifyFileCategory(ext) {
+  const e = (ext || '').toLowerCase();
+  if (['.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp', '.svg', '.ico', '.avif'].includes(e)) return 'image';
+  if (['.mp4', '.mkv', '.mov', '.avi', '.webm', '.wmv', '.m4v'].includes(e)) return 'video';
+  if (['.mp3', '.wav', '.flac', '.ogg', '.m4a', '.aac'].includes(e)) return 'audio';
+  if (e === '.pdf') return 'pdf';
+  if (['.doc', '.docx', '.rtf', '.odt'].includes(e)) return 'doc';
+  if (['.xls', '.xlsx', '.csv', '.ods'].includes(e)) return 'sheet';
+  if (['.ppt', '.pptx', '.odp'].includes(e)) return 'slide';
+  if (['.zip', '.rar', '.7z', '.tar', '.gz', '.bz2'].includes(e)) return 'archive';
+  if ([
+    '.txt', '.md', '.json', '.js', '.ts', '.jsx', '.tsx', '.py', '.html', '.css',
+    '.yml', '.yaml', '.xml', '.ini', '.cfg', '.log', '.bat', '.cmd', '.ps1', '.vbs',
+    '.c', '.cpp', '.cs', '.java', '.go', '.rs', '.php', '.sql', '.sh', '.env'
+  ].includes(e)) return 'code';
+  if (['.exe', '.msi', '.lnk', '.url'].includes(e)) return 'exe';
+  return 'file';
+}
+
+function isPreviewableTextExt(ext) {
+  const cat = classifyFileCategory(ext);
+  return cat === 'code' || ['.csv', '.svg'].includes((ext || '').toLowerCase());
+}
+
+async function getCachedSystemFileIcon(fullPath, ext) {
+  const lowerExt = (ext || '').toLowerCase();
+  const perFile = ['.exe', '.lnk', '.ico', '.url'].includes(lowerExt);
+  const cacheKey = perFile ? `path:${fullPath}` : `ext:${lowerExt || '__none__'}`;
+
+  if (fileExtIconCache.has(cacheKey)) {
+    return fileExtIconCache.get(cacheKey);
+  }
+  try {
+    const iconImg = await app.getFileIcon(fullPath, { size: 'normal' });
+    if (iconImg && !iconImg.isEmpty()) {
+      const dataUrl = iconImg.toDataURL();
+      if (fileExtIconCache.size > 160) {
+        const firstKey = fileExtIconCache.keys().next().value;
+        fileExtIconCache.delete(firstKey);
+      }
+      fileExtIconCache.set(cacheKey, dataUrl);
+      return dataUrl;
+    }
+  } catch {}
+  return '';
+}
+
+ipcMain.handle('sidebar:get-special-folders', () => {
+  const candidates = [
+    { key: 'desktop', label: 'Masaüstü', emoji: '🖥️' },
+    { key: 'downloads', label: 'İndirilenler', emoji: '⬇️' },
+    { key: 'documents', label: 'Belgeler', emoji: '📄' },
+    { key: 'pictures', label: 'Resimler', emoji: '🖼️' },
+    { key: 'music', label: 'Müzik', emoji: '🎵' },
+    { key: 'videos', label: 'Videolar', emoji: '🎬' }
+  ];
+  const list = [];
+  for (const c of candidates) {
+    try {
+      const p = app.getPath(c.key);
+      if (p && fs.existsSync(p)) {
+        list.push({ ...c, path: p, name: path.basename(p) || c.label });
+      }
+    } catch {}
+  }
+  return list;
+});
+
+ipcMain.handle('sidebar:pick-folder', async () => {
+  ignoreBlurCount++;
+  try {
+    const res = await dialog.showOpenDialog(mainWindow, {
+      title: 'Zen Side\'a Sabitlenecek Klasörü Seçin',
+      properties: ['openDirectory']
+    });
+    if (res.canceled || !res.filePaths.length) {
+      return { canceled: true };
+    }
+    const folderPath = res.filePaths[0];
+    const baseName = path.basename(folderPath) || folderPath;
+    return {
+      canceled: false,
+      folderPath,
+      folderName: baseName
+    };
+  } finally {
+    setTimeout(() => {
+      ignoreBlurCount = Math.max(0, ignoreBlurCount - 1);
+    }, 200);
+  }
+});
+
+ipcMain.handle('sidebar:stat-path', (_e, targetPath) => {
+  try {
+    if (!targetPath) return { exists: false };
+    const resolved = path.resolve(String(targetPath));
+    if (!fs.existsSync(resolved)) return { exists: false };
+    const st = fs.statSync(resolved);
+    return {
+      exists: true,
+      isDirectory: st.isDirectory(),
+      isFile: st.isFile(),
+      path: resolved,
+      name: path.basename(resolved) || resolved,
+      size: st.size,
+      mtimeMs: st.mtimeMs
+    };
+  } catch {
+    return { exists: false };
+  }
+});
+
+ipcMain.handle('sidebar:read-directory', async (_e, { dirPath, showHidden = false } = {}) => {
+  try {
+    if (!dirPath) {
+      return { ok: false, error: 'Klasör yolu belirtilmedi.' };
+    }
+    const resolvedPath = path.resolve(String(dirPath));
+    if (!fs.existsSync(resolvedPath)) {
+      return { ok: false, error: 'Klasör bulunamadı veya taşınmış.', resolvedPath };
+    }
+    const dirStat = await fs.promises.stat(resolvedPath);
+    if (!dirStat.isDirectory()) {
+      return { ok: false, error: 'Belirtilen yol bir klasör değil.', resolvedPath };
+    }
+
+    const dirents = await fs.promises.readdir(resolvedPath, { withFileTypes: true });
+    const systemIgnore = new Set(['desktop.ini', 'thumbs.db', '$recycle.bin', 'system volume information']);
+    const items = [];
+    let folderCount = 0;
+    let fileCount = 0;
+    let totalBytes = 0;
+
+    for (const d of dirents) {
+      const lowerName = d.name.toLowerCase();
+      if (!showHidden) {
+        if (systemIgnore.has(lowerName) || d.name.startsWith('.') || d.name.startsWith('~$')) {
+          continue;
+        }
+      }
+
+      const fullPath = path.join(resolvedPath, d.name);
+      let st = null;
+      try {
+        st = await fs.promises.stat(fullPath);
+      } catch {
+        continue;
+      }
+
+      const isDir = st.isDirectory();
+      if (isDir) folderCount++;
+      else {
+        fileCount++;
+        totalBytes += st.size || 0;
+      }
+
+      if (items.length >= 600) continue;
+
+      const ext = isDir ? '' : path.extname(d.name).toLowerCase();
+      const category = isDir ? 'folder' : classifyFileCategory(ext);
+      const isThumbImage = !isDir && category === 'image' && st.size <= 12 * 1024 * 1024;
+      const thumbUrl = isThumbImage ? pathToFileURL(fullPath).href : '';
+      const sysIcon = (!isDir && !isThumbImage)
+        ? await getCachedSystemFileIcon(fullPath, ext)
+        : '';
+
+      items.push({
+        name: d.name,
+        path: fullPath,
+        isDirectory: isDir,
+        ext,
+        category,
+        size: isDir ? 0 : st.size,
+        mtimeMs: st.mtimeMs,
+        thumbUrl,
+        sysIcon,
+        canPreview: !isDir && (category === 'image' || isPreviewableTextExt(ext))
+      });
+    }
+
+    const parentCandidate = path.dirname(resolvedPath);
+    const parentPath = parentCandidate && parentCandidate !== resolvedPath ? parentCandidate : null;
+
+    return {
+      ok: true,
+      resolvedPath,
+      folderName: path.basename(resolvedPath) || resolvedPath,
+      parentPath,
+      folderCount,
+      fileCount,
+      totalBytes,
+      truncated: (folderCount + fileCount) > items.length,
+      items
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err.message || 'Klasör okunamadı.'
+    };
+  }
+});
+
+ipcMain.handle('sidebar:open-path', async (_e, targetPath) => {
+  try {
+    if (!targetPath || !fs.existsSync(targetPath)) {
+      return { ok: false, error: 'Dosya veya klasör bulunamadı.' };
+    }
+    const errMsg = await shell.openPath(targetPath);
+    return errMsg ? { ok: false, error: errMsg } : { ok: true };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+});
+
+ipcMain.handle('sidebar:reveal-in-explorer', (_e, targetPath) => {
+  try {
+    if (!targetPath || !fs.existsSync(targetPath)) return false;
+    shell.showItemInFolder(targetPath);
+    return true;
+  } catch {
+    return false;
+  }
+});
+
+ipcMain.handle('sidebar:create-subfolder', (_e, { parentDir, folderName } = {}) => {
+  try {
+    const cleanName = String(folderName || '').trim().replace(/[<>:"/\\|?*]/g, '');
+    if (!parentDir || !cleanName) {
+      return { ok: false, error: 'Geçerli bir klasör adı girin.' };
+    }
+    const target = path.join(path.resolve(parentDir), cleanName);
+    if (fs.existsSync(target)) {
+      return { ok: false, error: 'Bu isimde bir klasör veya dosya zaten var.' };
+    }
+    fs.mkdirSync(target, { recursive: true });
+    return { ok: true, path: target, name: cleanName };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+});
+
+ipcMain.handle('sidebar:rename-fs-item', (_e, { oldPath, newName } = {}) => {
+  try {
+    const cleanName = String(newName || '').trim().replace(/[<>:"/\\|?*]/g, '');
+    if (!oldPath || !cleanName) {
+      return { ok: false, error: 'Geçerli bir ad girin.' };
+    }
+    const resolvedOld = path.resolve(oldPath);
+    if (!fs.existsSync(resolvedOld)) {
+      return { ok: false, error: 'Öğe bulunamadı.' };
+    }
+    const newPath = path.join(path.dirname(resolvedOld), cleanName);
+    if (resolvedOld.toLowerCase() !== newPath.toLowerCase() && fs.existsSync(newPath)) {
+      return { ok: false, error: 'Bu isimde başka bir öğe zaten mevcut.' };
+    }
+    fs.renameSync(resolvedOld, newPath);
+    return { ok: true, path: newPath, name: cleanName };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+});
+
+ipcMain.handle('sidebar:trash-fs-item', async (_e, targetPath) => {
+  ignoreBlurCount++;
+  try {
+    if (!targetPath || !fs.existsSync(targetPath)) {
+      return { ok: false, error: 'Öğe bulunamadı.' };
+    }
+    const baseName = path.basename(targetPath);
+    const confirm = await dialog.showMessageBox(mainWindow, {
+      type: 'question',
+      buttons: ['Çöp Kutusu\'na Taşı', 'İptal'],
+      defaultId: 0,
+      cancelId: 1,
+      title: 'Çöp Kutusu\'na Taşı',
+      message: `"${baseName}" Çöp Kutusu'na taşınsın mı?`
+    });
+    if (confirm.response !== 0) {
+      return { ok: false, canceled: true };
+    }
+    await shell.trashItem(targetPath);
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  } finally {
+    setTimeout(() => {
+      ignoreBlurCount = Math.max(0, ignoreBlurCount - 1);
+    }, 200);
+  }
+});
+
+ipcMain.handle('sidebar:copy-files-into-folder', async (_e, { sourcePaths, targetDir } = {}) => {
+  try {
+    if (!targetDir || !fs.existsSync(targetDir) || !Array.isArray(sourcePaths) || !sourcePaths.length) {
+      return { ok: false, copiedCount: 0, error: 'Geçersiz hedef klasör veya dosya.' };
+    }
+    const resolvedTargetDir = path.resolve(targetDir);
+    let copiedCount = 0;
+
+    for (const rawSrc of sourcePaths) {
+      if (!rawSrc) continue;
+      const src = path.resolve(rawSrc);
+      if (!fs.existsSync(src)) continue;
+      if (path.dirname(src).toLowerCase() === resolvedTargetDir.toLowerCase()) continue;
+
+      const parsed = path.parse(src);
+      let dest = path.join(resolvedTargetDir, parsed.base);
+      let counter = 1;
+      while (fs.existsSync(dest)) {
+        dest = path.join(resolvedTargetDir, `${parsed.name} (${counter})${parsed.ext}`);
+        counter++;
+      }
+
+      const st = fs.statSync(src);
+      if (st.isDirectory()) {
+        fs.cpSync(src, dest, { recursive: true });
+      } else {
+        fs.copyFileSync(src, dest);
+      }
+      copiedCount++;
+    }
+
+    return { ok: true, copiedCount };
+  } catch (err) {
+    return { ok: false, copiedCount: 0, error: err.message };
+  }
+});
+
+ipcMain.handle('sidebar:preview-file', async (_e, targetPath) => {
+  try {
+    if (!targetPath || !fs.existsSync(targetPath)) {
+      return { ok: false, error: 'Dosya bulunamadı.' };
+    }
+    const resolved = path.resolve(targetPath);
+    const st = await fs.promises.stat(resolved);
+    if (st.isDirectory()) {
+      return { ok: false, error: 'Klasör önizlenemez.' };
+    }
+    const ext = path.extname(resolved).toLowerCase();
+    const cat = classifyFileCategory(ext);
+
+    if (cat === 'image') {
+      return {
+        ok: true,
+        kind: 'image',
+        name: path.basename(resolved),
+        path: resolved,
+        size: st.size,
+        mtimeMs: st.mtimeMs,
+        fileUrl: pathToFileURL(resolved).href
+      };
+    }
+
+    if (isPreviewableTextExt(ext) || st.size <= 128 * 1024) {
+      const maxRead = 120 * 1024;
+      const fd = await fs.promises.open(resolved, 'r');
+      const readLen = Math.min(st.size, maxRead);
+      const buf = Buffer.alloc(readLen);
+      await fd.read(buf, 0, readLen, 0);
+      await fd.close();
+
+      // İkili (binary) dosya kontrolü (ilk 2 KB içinde NUL baytı varsa metin önizleme yapma)
+      const checkLen = Math.min(readLen, 2048);
+      for (let i = 0; i < checkLen; i++) {
+        if (buf[i] === 0) {
+          return { ok: false, error: 'Bu dosya türü ikili (binary) formatta; doğrudan açabilirsiniz.' };
+        }
+      }
+
+      return {
+        ok: true,
+        kind: 'text',
+        name: path.basename(resolved),
+        path: resolved,
+        size: st.size,
+        mtimeMs: st.mtimeMs,
+        truncated: st.size > maxRead,
+        content: buf.toString('utf-8')
+      };
+    }
+
+    return { ok: false, error: 'Bu dosya boyutu/türü için hızlı önizleme desteklenmiyor.' };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+});
+
+ipcMain.handle('sidebar:folder-item-context-menu', (_e, info) => {
+  return new Promise((resolve) => {
+    ignoreBlurCount++;
+    let resolved = false;
+    const done = (action) => {
+      if (resolved) return;
+      resolved = true;
+      setTimeout(() => {
+        ignoreBlurCount = Math.max(0, ignoreBlurCount - 1);
+      }, 150);
+      resolve(action);
+    };
+
+    const { sites } = store.get();
+    const shareTargets = (sites || []).filter(
+      (s) => s.type !== 'folder' && /gemini|chatgpt|openai|claude|copilot|whatsapp|telegram|discord/i.test(`${s.url} ${s.name}`)
+    );
+
+    const template = info.isDirectory
+      ? [
+          {
+            label: `📂 "${info.name}" Klasörünü Aç`,
+            click: () => done('open')
+          },
+          {
+            label: '📌 Bu Klasörü Kenar Çubuğuna Ayrı Sekme Olarak Sabitle (+)',
+            click: () => done('pin-subfolder')
+          },
+          {
+            label: '🗂️ Windows Dosya Gezgininde Aç',
+            click: () => done('open-explorer')
+          },
+          { type: 'separator' },
+          {
+            label: '📋 Klasör Yolunu Kopyala',
+            click: () => done('copy-path')
+          },
+          {
+            label: '✏️ Yeniden Adlandır…',
+            click: () => done('rename')
+          },
+          { type: 'separator' },
+          {
+            label: '🗑️ Çöp Kutusu\'na Taşı',
+            click: () => done('trash')
+          }
+        ]
+      : [
+          {
+            label: `🚀 "${info.name}" Dosyasını Aç`,
+            click: () => done('open')
+          },
+          ...(info.canPreview
+            ? [
+                {
+                  label: '👁️ Zen Side İçinde Hızlı Önizle',
+                  click: () => done('preview')
+                }
+              ]
+            : []),
+          ...(shareTargets.length > 0 && (info.category === 'image' || info.canPreview)
+            ? [
+                {
+                  label: '✨ Sekmeye Gönder (Yapay Zeka / Mesajlaşma)',
+                  submenu: shareTargets.map((s) => ({
+                    label: `${s.name} sekmesine gönder`,
+                    click: () => done(`send-to-site:${s.id}`)
+                  }))
+                }
+              ]
+            : []),
+          {
+            label: '📂 Dosya Gezgininde Göster',
+            click: () => done('reveal')
+          },
+          { type: 'separator' },
+          ...(info.category === 'image'
+            ? [
+                {
+                  label: '🖼️ Görseli Panoya Kopyala',
+                  click: () => done('copy-image')
+                }
+              ]
+            : []),
+          {
+            label: '📋 Dosya Yolunu Kopyala',
+            click: () => done('copy-path')
+          },
+          {
+            label: '✏️ Yeniden Adlandır…',
+            click: () => done('rename')
+          },
+          { type: 'separator' },
+          {
+            label: '🗑️ Çöp Kutusu\'na Taşı',
+            click: () => done('trash')
+          }
+        ];
+
+    const menu = Menu.buildFromTemplate(template);
+    menu.popup({
+      window: mainWindow,
+      callback: () => done(null)
+    });
+  });
+});
+
+ipcMain.on('sidebar:start-native-drag', async (event, targetPath) => {
+  try {
+    if (!targetPath || !fs.existsSync(targetPath)) return;
+    let dragIcon = null;
+    try {
+      dragIcon = await app.getFileIcon(targetPath, { size: 'normal' });
+    } catch {}
+    if (!dragIcon || dragIcon.isEmpty()) {
+      dragIcon = createSidebarIcon(false);
+    }
+    event.sender.startDrag({
+      file: targetPath,
+      icon: dragIcon
+    });
+  } catch {}
+});
+
 ipcMain.handle('sidebar:workspace-menu', () => {
   return new Promise((resolve) => {
     ignoreBlurCount++;
@@ -1755,75 +2280,126 @@ ipcMain.handle('sidebar:site-context-menu', (_e, info) => {
     const { workspaces } = store.get();
     const assignableWorkspaces = (workspaces || []).filter((w) => w.id !== 'all');
 
-    const menu = Menu.buildFromTemplate([
-      {
-        label: `${info.name} — Aç`,
-        click: () => done('open')
-      },
-      {
-        label: '⬒ Alt Bölmede Aç (Çift Sekme / Split-View)',
-        click: () => done('open-split')
-      },
-      {
-        label: 'Düzenle & İkon Özelleştir…',
-        click: () => done('edit')
-      },
-      {
-        label: 'Çalışma Alanına Ata',
-        submenu: assignableWorkspaces.map((ws) => ({
-          label: `${ws.badge} ${ws.name}`,
-          type: 'radio',
-          checked: (info.workspace || 'general') === ws.id,
-          click: () => done(`workspace:${ws.id}`)
-        }))
-      },
-      { type: 'separator' },
-      {
-        label: 'Sayfayı Yenile',
-        enabled: Boolean(info.isLoaded),
-        click: () => done('reload')
-      },
-      {
-        label: info.isMuted ? 'Sekme Sesini Aç (🔊)' : 'Sekme Sesini Kapat (🔇)',
-        enabled: Boolean(info.isLoaded),
-        click: () => done('toggle-mute')
-      },
-      {
-        label: info.mobileMode ? 'Masaüstü Görünümüne Geç' : 'Mobil Görünüme Geç',
-        click: () => done('toggle-mobile')
-      },
-      {
-        label: 'Bildirimler İçin Uyanık Tut (Otomatik Uyutma)',
-        type: 'checkbox',
-        checked: Boolean(info.keepAwake),
-        click: () => done('toggle-keep-awake')
-      },
-      {
-        label: 'Microsoft Edge\'de Aç',
-        click: () => done('open-edge')
-      },
-      {
-        label: 'Şimdi Uyku Moduna Al (RAM Boşalt)',
-        enabled: Boolean(info.isLoaded),
-        click: () => done('hibernate')
-      },
-      { type: 'separator' },
-      {
-        label: 'Yukarı Taşı',
-        enabled: info.index > 0,
-        click: () => done('move-up')
-      },
-      {
-        label: 'Aşağı Taşı',
-        enabled: info.index < info.total - 1,
-        click: () => done('move-down')
-      },
-      { type: 'separator' },
-      {
-        label: 'Kısayolu Kaldır',
-        click: () => done('delete')
-      }
-    ]);
+    const template = info.isFolder
+      ? [
+          {
+            label: `📁 ${info.name} — Klasörü Aç`,
+            click: () => done('open')
+          },
+          {
+            label: '🗂️ Windows Dosya Gezgininde Aç',
+            click: () => done('open-explorer')
+          },
+          {
+            label: 'Düzenle & İkon Özelleştir…',
+            click: () => done('edit')
+          },
+          {
+            label: 'Çalışma Alanına Ata',
+            submenu: assignableWorkspaces.map((ws) => ({
+              label: `${ws.badge} ${ws.name}`,
+              type: 'radio',
+              checked: (info.workspace || 'general') === ws.id,
+              click: () => done(`workspace:${ws.id}`)
+            }))
+          },
+          { type: 'separator' },
+          {
+            label: 'Klasör İçeriğini Yenile',
+            click: () => done('reload')
+          },
+          {
+            label: '📋 Klasör Yolunu Kopyala',
+            click: () => done('copy-folder-path')
+          },
+          { type: 'separator' },
+          {
+            label: 'Yukarı Taşı',
+            enabled: info.index > 0,
+            click: () => done('move-up')
+          },
+          {
+            label: 'Aşağı Taşı',
+            enabled: info.index < info.total - 1,
+            click: () => done('move-down')
+          },
+          { type: 'separator' },
+          {
+            label: 'Klasörü Kenar Çubuğundan Kaldır',
+            click: () => done('delete')
+          }
+        ]
+      : [
+          {
+            label: `${info.name} — Aç`,
+            click: () => done('open')
+          },
+          {
+            label: '⬒ Alt Bölmede Aç (Çift Sekme / Split-View)',
+            click: () => done('open-split')
+          },
+          {
+            label: 'Düzenle & İkon Özelleştir…',
+            click: () => done('edit')
+          },
+          {
+            label: 'Çalışma Alanına Ata',
+            submenu: assignableWorkspaces.map((ws) => ({
+              label: `${ws.badge} ${ws.name}`,
+              type: 'radio',
+              checked: (info.workspace || 'general') === ws.id,
+              click: () => done(`workspace:${ws.id}`)
+            }))
+          },
+          { type: 'separator' },
+          {
+            label: 'Sayfayı Yenile',
+            enabled: Boolean(info.isLoaded),
+            click: () => done('reload')
+          },
+          {
+            label: info.isMuted ? 'Sekme Sesini Aç (🔊)' : 'Sekme Sesini Kapat (🔇)',
+            enabled: Boolean(info.isLoaded),
+            click: () => done('toggle-mute')
+          },
+          {
+            label: info.mobileMode ? 'Masaüstü Görünümüne Geç' : 'Mobil Görünüme Geç',
+            click: () => done('toggle-mobile')
+          },
+          {
+            label: 'Bildirimler İçin Uyanık Tut (Otomatik Uyutma)',
+            type: 'checkbox',
+            checked: Boolean(info.keepAwake),
+            click: () => done('toggle-keep-awake')
+          },
+          {
+            label: 'Microsoft Edge\'de Aç',
+            click: () => done('open-edge')
+          },
+          {
+            label: 'Şimdi Uyku Moduna Al (RAM Boşalt)',
+            enabled: Boolean(info.isLoaded),
+            click: () => done('hibernate')
+          },
+          { type: 'separator' },
+          {
+            label: 'Yukarı Taşı',
+            enabled: info.index > 0,
+            click: () => done('move-up')
+          },
+          {
+            label: 'Aşağı Taşı',
+            enabled: info.index < info.total - 1,
+            click: () => done('move-down')
+          },
+          { type: 'separator' },
+          {
+            label: 'Kısayolu Kaldır',
+            click: () => done('delete')
+          }
+        ];
+
+    const menu = Menu.buildFromTemplate(template);
 
     menu.popup({
       window: mainWindow,
@@ -1853,6 +2429,10 @@ ipcMain.handle('sidebar:rail-context-menu', () => {
       {
         label: 'Yeni Site Ekle (+)',
         click: () => done('add-site')
+      },
+      {
+        label: '📁 Klasör Ekle (+)',
+        click: () => done('add-folder')
       },
       {
         label: '✂️ Ekran Görüntüsü Kırp & Gönder',
@@ -2020,11 +2600,25 @@ app.whenReady().then(() => {
             hasToolsBtn: Boolean(document.getElementById('btn-rail-tools')),
             hasWorkspaceBtn: Boolean(document.getElementById('btn-rail-workspace')),
             hasAdblockBtn: Boolean(document.getElementById('btn-toggle-adblock')),
+            hasFolderStage: Boolean(document.getElementById('folder-stage')),
+            hasEntryTypeSwitcher: Boolean(document.getElementById('entry-type-switcher')),
             toolTabsCount: document.querySelectorAll('[data-tool-tab]').length,
             toolsWidgetLoaded: Boolean(window.ZenToolsWidget),
+            folderWidgetLoaded: Boolean(window.ZenFolderWidget),
             monitorOptions: document.getElementById('set-target-display')?.options?.length || 0,
             autoCloseOutsideChecked: document.getElementById('set-autoclose-outside')?.checked
           })`);
+
+          const folderApiCheck = await mainWindow.webContents.executeJavaScript(`(async () => {
+            const specials = await window.sidebarAPI.getSpecialFolders();
+            const dirRes = await window.sidebarAPI.readDirectory({ dirPath: ${JSON.stringify(__dirname)} });
+            return {
+              specialFoldersCount: Array.isArray(specials) ? specials.length : 0,
+              readOk: Boolean(dirRes && dirRes.ok),
+              fileCount: dirRes?.fileCount || 0,
+              hasFolderWidgetFile: Array.isArray(dirRes?.items) && dirRes.items.some(i => i.name === 'folder-widget.js')
+            };
+          })()`);
 
           // Mini Araçlar açılış + Dışarı tıklayınca otomatik kapanma testi
           await mainWindow.webContents.executeJavaScript(`document.getElementById('btn-rail-tools')?.click()`);
@@ -2056,6 +2650,7 @@ app.whenReady().then(() => {
               afterOutsideWidth
             },
             domCheck,
+            folderApiCheck,
             rendererErrors
           }));
         } catch (err) {

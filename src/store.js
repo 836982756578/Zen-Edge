@@ -193,7 +193,10 @@ class ConfigStore {
 
         sites = sites.map((s) => ({
           ...s,
-          keepAwake: typeof s.keepAwake === 'boolean' ? s.keepAwake : isMessagingUrl(s.url),
+          type: s.type === 'folder' ? 'folder' : 'site',
+          keepAwake: s.type === 'folder'
+            ? false
+            : (typeof s.keepAwake === 'boolean' ? s.keepAwake : isMessagingUrl(s.url)),
           workspace: inferWorkspaceForSite(s)
         }));
 
@@ -283,6 +286,7 @@ class ConfigStore {
     const current = this.get();
     current.sites = (Array.isArray(sites) ? sites : []).map((s) => ({
       ...s,
+      type: s.type === 'folder' ? 'folder' : 'site',
       workspace: inferWorkspaceForSite(s)
     }));
     return this.save(current);
