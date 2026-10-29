@@ -18,6 +18,10 @@ const path = require('path');
 const fs = require('fs');
 const { spawn } = require('child_process');
 
+// Otomatik gizli (ekran dışı / saydam) moddayken WhatsApp vb. arka plan sekmelerinin canlı bildirim almaya devam etmesi için
+app.commandLine.appendSwitch('disable-renderer-backgrounding');
+app.commandLine.appendSwitch('disable-background-timer-throttling');
+
 /**
  * Eski "edge-kenar-cubugu" kullanıcı verilerini (ayarlar, özel genişlikler ve WhatsApp oturumu/çerezleri)
  * yeni "zen-side" dizinine hiçbir veri kaybı olmadan tek seferlik taşır.
@@ -176,8 +180,7 @@ function syncWindowMaterial() {
   if (!mainWindow || mainWindow.isDestroyed()) return;
   const { settings } = store.get();
   const dark = isEffectiveDark(settings);
-  const rounded = uiWindowState.mode === 'handle';
-  appBar.applyBackdropMaterial(mainWindow, settings.material || 'acrylic', dark, rounded);
+  appBar.applyBackdropMaterial(mainWindow, settings.material || 'acrylic', dark, false);
 }
 
 function setExactBoundsWithResync(display, dipBounds) {
@@ -419,6 +422,7 @@ async function startQuickSnip() {
   const physW = Math.max(320, Math.round(display.bounds.width * scale));
   const physH = Math.max(240, Math.round(display.bounds.height * scale));
 
+  const restoreVisible = uiWindowState.mode !== 'handle';
   ignoreBlurCount++;
   try {
     // Kenar çubuğu kırpılacak görüntüyü kapatmasın diye yakalama anında saydamlaştır
@@ -430,7 +434,9 @@ async function startQuickSnip() {
       thumbnailSize: { width: physW, height: physH }
     });
 
-    mainWindow.setOpacity(1);
+    if (restoreVisible && uiWindowState.mode !== 'handle') {
+      mainWindow.setOpacity(1);
+    }
 
     if (!sources || sources.length === 0) {
       ignoreBlurCount = Math.max(0, ignoreBlurCount - 1);
@@ -497,7 +503,9 @@ async function startQuickSnip() {
 
     return true;
   } catch (err) {
-    try { mainWindow.setOpacity(1); } catch {}
+    try {
+      if (uiWindowState.mode !== 'handle') mainWindow.setOpacity(1);
+    } catch {}
     ignoreBlurCount = Math.max(0, ignoreBlurCount - 1);
     console.warn('[QuickSnip] Ekran yakalanamadı:', err.message);
     return false;
@@ -528,25 +536,28 @@ function applyWindowGeometryInner() {
   const cleanTopDip = Math.round(cleanPhys.top / scale);
   const cleanHeightDip = Math.round((cleanPhys.bottom - cleanPhys.top) / scale);
 
-  // 1) Otomatik Gizle Tutamacı Modu
+  // 1) Otomatik Gizli Mod — Ekran kenarında hiçbir tutamaç, çizgi veya gölge görünmez; tam kenar sensörü (updateCursorWatcher) aktif kalır
   if (mode === 'handle') {
     if (appBar.registered || appBar.usingSpiFallback) {
       appBar.unregister(display);
     }
-    const baseLeft = display.bounds.x;
-    const baseRight = display.bounds.x + display.bounds.width;
-    const hasUnread = unreadSummary.total > 0;
-    const width = hasUnread ? HANDLE_UNREAD_WIDTH : HANDLE_WIDTH;
-    const height = hasUnread ? HANDLE_UNREAD_HEIGHT : HANDLE_HEIGHT;
-    const x = edge === 'left' ? baseLeft : (baseRight - width);
-    const ratio = clamp(uiWindowState.handleYRatio ?? settings.handleYRatio ?? 0.38, 0.05, 0.92);
-    const y = cleanTopDip + Math.round((cleanHeightDip - height) * ratio);
-
-    setExactBoundsWithResync(display, { x, y, width, height });
-    syncWindowMaterial();
+    try {
+      mainWindow.setOpacity(0);
+      mainWindow.setIgnoreMouseEvents(true);
+    } catch {}
+    setExactBoundsWithResync(display, { x: -16000, y: -16000, width: 4, height: 20 });
     updateCursorWatcher();
     return;
   }
+
+  const restoreVisibleWindow = () => {
+    try {
+      mainWindow.setIgnoreMouseEvents(false);
+      if (mainWindow.getOpacity() < 1) {
+        mainWindow.setOpacity(1);
+      }
+    } catch {}
+  };
 
   // 2) Şerit Modu (minimum 22px, isteğe bağlı genişletilebilir) veya Açık Panel (panelWidth + railWidth)
   const rWidth = clamp(uiWindowState.railWidth || settings.railWidth || MIN_RAIL_WIDTH, MIN_RAIL_WIDTH, MAX_RAIL_WIDTH);
@@ -574,6 +585,7 @@ function applyWindowGeometryInner() {
         height: reservedRect.height
       });
       syncWindowMaterial();
+      restoreVisibleWindow();
       updateCursorWatcher();
       return;
     }
@@ -592,6 +604,7 @@ function applyWindowGeometryInner() {
     height: cleanHeightDip
   });
   syncWindowMaterial();
+  restoreVisibleWindow();
   updateCursorWatcher();
 }
 
@@ -1046,19 +1059,23 @@ function createMainWindow() {
 
   const icon = createSidebarIcon();
   const initDisplay = getTargetDisplay();
-  const initX = settings.edge === 'left'
-    ? initDisplay.bounds.x
-    : (initDisplay.bounds.x + initDisplay.bounds.width - uiWindowState.railWidth);
+  const startHidden = uiWindowState.mode === 'handle';
+  const initX = startHidden
+    ? -16000
+    : (settings.edge === 'left'
+      ? initDisplay.bounds.x
+      : (initDisplay.bounds.x + initDisplay.bounds.width - uiWindowState.railWidth));
 
   mainWindow = new BrowserWindow({
     title: 'Zen Side',
     x: initX,
-    y: initDisplay.workArea.y,
-    width: uiWindowState.railWidth,
-    height: initDisplay.workArea.height,
+    y: startHidden ? -16000 : initDisplay.workArea.y,
+    width: startHidden ? 4 : uiWindowState.railWidth,
+    height: startHidden ? 20 : initDisplay.workArea.height,
+    opacity: startHidden ? 0 : 1,
     show: false,
     minWidth: 4,
-    minHeight: 40,
+    minHeight: 20,
     frame: false,
     thickFrame: false,
     transparent: false,
@@ -1077,11 +1094,12 @@ function createMainWindow() {
       contextIsolation: true,
       nodeIntegration: false,
       webviewTag: true,
-      spellcheck: true
+      spellcheck: true,
+      backgroundThrottling: false
     }
   });
 
-  mainWindow.setMinimumSize(4, 40);
+  mainWindow.setMinimumSize(4, 20);
   mainWindow.setAlwaysOnTop(true, 'screen-saver');
   syncWindowMaterial();
 
@@ -1109,9 +1127,13 @@ function createMainWindow() {
   mainWindow.loadFile(path.join(__dirname, 'index.html'));
 
   mainWindow.once('ready-to-show', () => {
-    mainWindow.show();
     syncWindowMaterial();
     applyWindowGeometry();
+    if (uiWindowState.mode === 'handle') {
+      mainWindow.showInactive();
+    } else {
+      mainWindow.show();
+    }
     appBar.ensureTopmost(mainWindow);
     startClipboardWatcher();
     appBar.startWatchdog((isFullscreen) => {
@@ -1965,17 +1987,13 @@ app.whenReady().then(() => {
           applyWindowGeometry();
           await wait(60);
           const handleBounds = mainWindow.getBounds();
-
-          unreadSummary = { total: 3, badgeText: '3', details: 'Whatsapp (3)', topSiteId: 'site-whatsapp' };
-          applyWindowGeometry();
-          await wait(60);
-          const unreadHandleBounds = mainWindow.getBounds();
-          unreadSummary = { total: 0, badgeText: '', details: '', topSiteId: null };
+          const handleOpacity = mainWindow.getOpacity();
 
           uiWindowState.mode = 'rail';
           uiWindowState.railWidth = savedRailW;
           applyWindowGeometry();
           await wait(60);
+          const railRestoredOpacity = mainWindow.getOpacity();
 
           const adblockTest = {
             blocksDoubleclick: adblock.shouldBlockRequest({
@@ -2029,7 +2047,8 @@ app.whenReady().then(() => {
             adblockTest,
             railBounds,
             handleBounds,
-            unreadHandleBounds,
+            handleOpacity,
+            railRestoredOpacity,
             outsideClickTest: {
               toolsOpenMode,
               toolsOpenWidth,

@@ -1,6 +1,6 @@
 # Zen Side v2.0 — Windows 10/11 Akıllı Masaüstü Kenar Çubuğu
 
-![Version](https://img.shields.io/badge/S%C3%BCr%C3%BCm-v2.0.0-6366F1)
+![Version](https://img.shields.io/badge/S%C3%BCr%C3%BCm-v2.0.1-6366F1)
 ![Platform](https://img.shields.io/badge/Platform-Windows%2010%20%7C%2011-0078D4?logo=windows)
 ![Electron](https://img.shields.io/badge/Chromium-134%20%2F%20Electron%2035-47848F?logo=electron)
 ![Win32 DWM](https://img.shields.io/badge/Win32-DWM%20Mica%20%26%20AppBar-8B5CF6)
@@ -59,7 +59,7 @@
 ### 8. Akıllı Masaüstü Hizalama, Boş Yere Tıklayınca Kapanma & Tam Kenar Sensörü
 - **Tam Ekran Uygulamalar Altında Kalmaz:** `SHAppBarMessage` ve DWM pencere hizalayıcı sayesinde pencereleri tam ekran büyüttüğünüzde (Maximize), pencereler şeridin altında kalmaz; tam **yanına** hizalanır.
 - **Mevcut Sayfaların Üstünde Açılır & Boş Yere Tıklayınca Kapanır:** Açılan sekme mevcut pencerelerinizi sıkıştırmadan üst katmanda açılır; ekranın boş bir yerine veya başka bir sayfaya tıkladığınızda otomatik kapanır (`📌` ile sabitlenebilir).
-- **Tam Kenar Yaklaşma Sensörlü Otomatik Gizleme:** Otomatik gizleme aktifken fareyi ekranın bulunduğu kenar boyunca herhangi bir noktaya yaklaştırdığınızda çubuk otomatik açılır, uzaklaştığınızda gizlenir (pencere kapatma `✕` köşesi ve kaydırma çubuğu sürüklemeleri akıllıca filtrelenir).
+- **Tam Kenar Yaklaşma Sensörlü %100 Görünmez Otomatik Gizleme:** Otomatik gizleme aktifken ekran kenarında hiçbir çubuk, tutamaç veya gölge kalmaz (`%100` görünmez). Fareyi ekranın bulunduğu kenar boyunca herhangi bir noktaya yaklaştırdığınızda çubuk otomatik açılır, uzaklaştığınızda tamamen kaybolur (pencere kapatma `✕` köşesi ve kaydırma çubuğu sürüklemeleri akıllıca filtrelenir).
 
 ### 9. Canlı WhatsApp Bildirimleri, Otomatik Uyku Modu & Mica / iOS Cam
 - **4 Katmanlı Canlı Bildirim:** WhatsApp yeni mesaj aldığında sekme başlığında `(2) Whatsapp` yazar, zümrüt yeşili parlar, simge rozeti, gizli kenar sayacı ve sistem tepsisi ikonu güncellenir.
