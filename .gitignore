@@ -1,0 +1,23 @@
+# Bağımlılıklar
+node_modules/
+
+# Derleme ve Paketleme Çıktıları (.exe / portable / installer)
+dist/
+out/
+release/
+
+# Ortam Değişkenleri ve Gizli Anahtarlar
+.env
+.env.*
+
+# Kişisel Yedekler ve Günlükler
+*-yedek.json
+*.log
+npm-debug.log*
+
+# İşletim Sistemi ve Editör Dosyaları
+Thumbs.db
+Desktop.ini
+.DS_Store
+.vscode/
+.idea/

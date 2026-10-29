@@ -1,0 +1,64 @@
+{
+  "name": "zen-side",
+  "version": "2.0.0",
+  "description": "Zen Side - Windows 10/11 için donanım hızlandırmalı Mica & iOS Cam efektli, bölünmüş görünümlü (Split-View), dahili reklam engelleyicili ve 0-RAM yerel mini araçlı akıllı masaüstü kenar çubuğu",
+  "author": "Serkan ŞENTÜRK (sL.)",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/836982756578/Zen-Side.git"
+  },
+  "homepage": "https://github.com/836982756578/Zen-Side",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "smoke-test": "electron . --smoke-test",
+    "dist:portable": "npx electron-builder --win portable",
+    "dist:installer": "npx electron-builder --win nsis",
+    "dist": "npx electron-builder --win portable nsis"
+  },
+  "keywords": [
+    "zen-side",
+    "sidebar",
+    "edge-bar",
+    "kenar-cubugu",
+    "windows-11",
+    "mica",
+    "acrylic",
+    "split-view",
+    "adblock",
+    "electron",
+    "whatsapp-sidebar",
+    "desktop-widget"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "koffi": "^2.9.0"
+  },
+  "devDependencies": {
+    "electron": "^35.0.0"
+  },
+  "build": {
+    "appId": "com.zenside.desktop",
+    "productName": "Zen Side",
+    "files": [
+      "src/**/*",
+      "package.json",
+      "LICENSE"
+    ],
+    "win": {
+      "target": [
+        "portable",
+        "nsis"
+      ]
+    },
+    "portable": {
+      "artifactName": "Zen-Side-Portable-${version}.exe"
+    },
+    "nsis": {
+      "artifactName": "Zen-Side-Setup-${version}.exe",
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true
+    }
+  }
+}

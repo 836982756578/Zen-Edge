@@ -1,0 +1,68 @@
+# Zen Side — Otomatik Windows (.exe) Derleme ve GitHub Release İş Akışı
+# Not: GitHub Web arayüzünden bu dosyayı `.github/workflows/release.yml` konumuna taşıdığınızda
+# (veya `workflow` yetkili bir token ile ittiğinizde) her `v*` etiketinde (ör. v2.0.0) ve
+# Actions sekmesinden "Run workflow" butonuna bastığınızda otomatik olarak:
+#   - Zen-Side-Portable-<sürüm>.exe (Kurulumsuz Taşınabilir)
+#   - Zen-Side-Setup-<sürüm>.exe    (NSIS Kurulum Sihirbazı)
+# üretilir ve GitHub Releases sayfasına eklenir.
+
+name: Build & Release Zen Side (.exe)
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    name: Windows 10/11 (.exe) Derlemesi
+    runs-on: windows-latest
+
+    steps:
+      - name: Kaynak kodunu çek
+        uses: actions/checkout@v4
+
+      - name: Node.js 20 kurulumu
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Bağımlılıkları yükle
+        run: npm ci
+
+      - name: Smoke Test kontrolü (Sözdizimi doğrulaması)
+        run: |
+          node --check src/main.js
+          node --check src/store.js
+          node --check src/win32-appbar.js
+          node --check src/adblock.js
+          node --check src/preload.js
+          node --check src/snip-preload.js
+          node --check src/tools-widget.js
+          node --check src/renderer.js
+
+      - name: Portable ve Setup .exe paketlerini üret
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+        run: npx --yes electron-builder@26 --win portable nsis --publish never
+
+      - name: Derlenen .exe dosyalarını Actions Artifact olarak yükle
+        uses: actions/upload-artifact@v4
+        with:
+          name: Zen-Side-Windows-Executables
+          path: |
+            dist/*.exe
+          if-no-files-found: error
+
+      - name: GitHub Release oluştur ve .exe dosyalarını yayınla (Etiket sürümlerinde)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            dist/*.exe

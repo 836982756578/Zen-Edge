@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Zen Side — Ekran Kırp & Gönder</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #050811;
+      font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+      cursor: crosshair;
+    }
+    #bg-screenshot {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: fill;
+      pointer-events: none;
+    }
+    #dim-mask {
+      position: fixed;
+      inset: 0;
+      background: rgba(6, 10, 20, 0.42);
+      pointer-events: none;
+    }
+    #hint-banner {
+      position: fixed;
+      top: 22px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 9px 18px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.84);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #f8fafc;
+      font-size: 13px;
+      font-weight: 500;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+      pointer-events: none;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    #hint-banner kbd {
+      padding: 2px 7px;
+      border-radius: 5px;
+      background: rgba(255, 255, 255, 0.14);
+      font-size: 11px;
+      font-family: inherit;
+    }
+    #selection-box {
+      position: fixed;
+      display: none;
+      border: 2px solid #38bdf8;
+      box-shadow: 0 0 0 9999px rgba(6, 10, 20, 0.48), 0 0 18px rgba(56, 189, 248, 0.55);
+      z-index: 10;
+      pointer-events: none;
+    }
+    #size-pill {
+      position: absolute;
+      top: -26px;
+      left: 0;
+      padding: 3px 8px;
+      border-radius: 5px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(56, 189, 248, 0.5);
+      color: #e2e8f0;
+      font-size: 11px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    #action-toolbar {
+      position: fixed;
+      display: none;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 9px;
+      border-radius: 12px;
+      background: rgba(15, 23, 42, 0.92);
+      backdrop-filter: blur(18px);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      box-shadow: 0 14px 34px rgba(0, 0, 0, 0.55);
+      z-index: 30;
+      cursor: default;
+    }
+    .snip-btn {
+      height: 32px;
+      padding: 0 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      background: rgba(255, 255, 255, 0.08);
+      color: #f8fafc;
+      font-size: 12.5px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: background 0.14s ease, transform 0.1s ease, border-color 0.14s ease;
+    }
+    .snip-btn:hover {
+      background: rgba(255, 255, 255, 0.18);
+      border-color: rgba(255, 255, 255, 0.35);
+    }
+    .snip-btn.ai-accent {
+      background: linear-gradient(135deg, #6366f1, #a855f7);
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+    .snip-btn.ai-accent:hover {
+      filter: brightness(1.12);
+    }
+    .snip-btn.wa-accent {
+      background: linear-gradient(135deg, #10b981, #059669);
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+    .snip-btn.wa-accent:hover {
+      filter: brightness(1.12);
+    }
+    .snip-btn.danger:hover {
+      background: #ef4444;
+      border-color: #ef4444;
+    }
+  </style>
+</head>
+<body>
+  <img id="bg-screenshot" alt="" />
+  <div id="dim-mask"></div>
+
+  <div id="hint-banner">
+    <span>✂️ <strong>Zen Side Ekran Kırpıcı:</strong> İstediğiniz alanı fareyle seçin</span>
+    <kbd>Esc: İptal</kbd>
+  </div>
+
+  <div id="selection-box">
+    <div id="size-pill">0 × 0</div>
+  </div>
+
+  <div id="action-toolbar"></div>
+
+  <script>
+    const bgImg = document.getElementById('bg-screenshot');
+    const dimMask = document.getElementById('dim-mask');
+    const selBox = document.getElementById('selection-box');
+    const sizePill = document.getElementById('size-pill');
+    const toolbar = document.getElementById('action-toolbar');
+
+    let targets = [];
+    let isDragging = false;
+    let hasSelection = false;
+    let startX = 0, startY = 0;
+    let rect = { x: 0, y: 0, w: 0, h: 0 };
+
+    window.snipAPI.onInit((payload) => {
+      bgImg.src = payload.screenshotDataUrl;
+      targets = Array.isArray(payload.targets) ? payload.targets : [];
+      rebuildToolbar();
+    });
+
+    function rebuildToolbar() {
+      toolbar.innerHTML = '';
+
+      targets.forEach((t) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `snip-btn ${t.kind === 'ai' ? 'ai-accent' : (t.kind === 'chat' ? 'wa-accent' : '')}`;
+        btn.textContent = `${t.emoji} ${t.label}`;
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          finishCrop('send-to-site', t.id);
+        });
+        toolbar.appendChild(btn);
+      });
+
+      const copyBtn = document.createElement('button');
+      copyBtn.type = 'button';
+      copyBtn.className = 'snip-btn';
+      copyBtn.textContent = '📋 Panoya Kopyala';
+      copyBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        finishCrop('copy', null);
+      });
+      toolbar.appendChild(copyBtn);
+
+      const saveBtn = document.createElement('button');
+      saveBtn.type = 'button';
+      saveBtn.className = 'snip-btn';
+      saveBtn.textContent = '💾 PNG Kaydet';
+      saveBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        finishCrop('save', null);
+      });
+      toolbar.appendChild(saveBtn);
+
+      const cancelBtn = document.createElement('button');
+      cancelBtn.type = 'button';
+      cancelBtn.className = 'snip-btn danger';
+      cancelBtn.textContent = '✕';
+      cancelBtn.title = 'İptal (Esc)';
+      cancelBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        window.snipAPI.cancel();
+      });
+      toolbar.appendChild(cancelBtn);
+    }
+
+    function updateSelectionVisual() {
+      selBox.style.display = 'block';
+      dimMask.style.display = 'none';
+      selBox.style.left = `${rect.x}px`;
+      selBox.style.top = `${rect.y}px`;
+      selBox.style.width = `${rect.w}px`;
+      selBox.style.height = `${rect.h}px`;
+
+      const scaleX = (bgImg.naturalWidth || window.innerWidth) / window.innerWidth;
+      const scaleY = (bgImg.naturalHeight || window.innerHeight) / window.innerHeight;
+      sizePill.textContent = `${Math.round(rect.w * scaleX)} × ${Math.round(rect.h * scaleY)} px`;
+      sizePill.style.top = rect.y < 32 ? '6px' : '-26px';
+      sizePill.style.left = rect.y < 32 ? '6px' : '0px';
+    }
+
+    function positionToolbar() {
+      toolbar.style.display = 'flex';
+      const tbRect = toolbar.getBoundingClientRect();
+      let left = rect.x + rect.w - tbRect.width;
+      left = Math.max(12, Math.min(window.innerWidth - tbRect.width - 12, left));
+      let top = rect.y + rect.h + 10;
+      if (top + tbRect.height > window.innerHeight - 12) {
+        top = Math.max(12, rect.y - tbRect.height - 10);
+      }
+      toolbar.style.left = `${left}px`;
+      toolbar.style.top = `${top}px`;
+    }
+
+    function finishCrop(action, targetSiteId) {
+      if (rect.w < 8 || rect.h < 8) return;
+      const scaleX = (bgImg.naturalWidth || window.innerWidth) / window.innerWidth;
+      const scaleY = (bgImg.naturalHeight || window.innerHeight) / window.innerHeight;
+
+      const sx = Math.max(0, Math.round(rect.x * scaleX));
+      const sy = Math.max(0, Math.round(rect.y * scaleY));
+      const sw = Math.max(1, Math.round(rect.w * scaleX));
+      const sh = Math.max(1, Math.round(rect.h * scaleY));
+
+      const canvas = document.createElement('canvas');
+      canvas.width = sw;
+      canvas.height = sh;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(bgImg, sx, sy, sw, sh, 0, 0, sw, sh);
+      const pngDataUrl = canvas.toDataURL('image/png');
+
+      window.snipAPI.complete({
+        action,
+        targetSiteId,
+        pngDataUrl
+      });
+    }
+
+    window.addEventListener('mousedown', (e) => {
+      if (e.button !== 0) return;
+      if (e.target.closest('#action-toolbar')) return;
+      isDragging = true;
+      hasSelection = false;
+      toolbar.style.display = 'none';
+      startX = e.clientX;
+      startY = e.clientY;
+      rect = { x: startX, y: startY, w: 0, h: 0 };
+      updateSelectionVisual();
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      const x1 = Math.min(startX, e.clientX);
+      const y1 = Math.min(startY, e.clientY);
+      const x2 = Math.max(startX, e.clientX);
+      const y2 = Math.max(startY, e.clientY);
+      rect = { x: x1, y: y1, w: x2 - x1, h: y2 - y1 };
+      updateSelectionVisual();
+    });
+
+    window.addEventListener('mouseup', () => {
+      if (!isDragging) return;
+      isDragging = false;
+      if (rect.w >= 12 && rect.h >= 12) {
+        hasSelection = true;
+        positionToolbar();
+      } else {
+        selBox.style.display = 'none';
+        dimMask.style.display = 'block';
+      }
+    });
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        window.snipAPI.cancel();
+      } else if (e.key === 'Enter' && hasSelection) {
+        if (targets.length > 0) finishCrop('send-to-site', targets[0].id);
+        else finishCrop('copy', null);
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="tr" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Zen Side</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="mode-rail edge-right">
+  <!-- 1) OTO-GİZLE KENAR TUTAMACI & CANLI BİLDİRİM ROZETİ -->
+  <div id="edge-handle" title="Zen Side'ı Aç (Fareyi ekran kenarına yaklaştırınca otomatik açılır)">
+    <div class="handle-pill"></div>
+    <span id="edge-unread-badge" class="edge-unread-badge hidden">0</span>
+  </div>
+
+  <!-- 2) ANA ZEN SIDE DÜZENİ (PANEL + İNCE ŞERİT) -->
+  <div id="app-shell">
+    <!-- GENİŞLEYEN İÇERİK PANELİ -->
+    <section id="drawer-panel" aria-label="Zen Side Uygulama Paneli">
+      <div id="resize-grip" title="Açılır sekme genişliğini ayarlamak için sürükleyin (Otomatik hafızaya alınır)">
+        <div class="resize-grip-pill"></div>
+      </div>
+
+      <!-- Üst Araç Çubuğu -->
+      <header id="drawer-header">
+        <div class="header-site-info" id="header-title-box" title="Adresi düzenlemek veya gitmek için tıklayın">
+          <div id="header-site-badge" class="mini-badge"></div>
+          <div class="header-titles">
+            <span id="header-site-name">Zen Side</span>
+            <span id="header-site-domain">Hazır</span>
+          </div>
+        </div>
+
+        <!-- Satır İçi Hızlı URL Çubuğu -->
+        <form id="inline-url-form" class="hidden">
+          <input
+            type="text"
+            id="inline-url-input"
+            placeholder="URL veya arama girin (örn: wikipedia.org)"
+            autocomplete="off"
+            spellcheck="false"
+          />
+        </form>
+
+        <div class="header-actions">
+          <div class="header-web-group" id="header-web-actions">
+            <button type="button" class="hdr-btn" id="btn-nav-back" title="Geri">
+              <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+            <button type="button" class="hdr-btn" id="btn-nav-forward" title="İleri">
+              <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+            <button type="button" class="hdr-btn" id="btn-nav-reload" title="Yenile">
+              <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/></svg>
+            </button>
+            <button type="button" class="hdr-btn" id="btn-toggle-ua" title="Mobil / Masaüstü Görünüm Değiştir">
+              <svg id="icon-ua-mobile" viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="2.5"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+            </button>
+            <button type="button" class="hdr-btn" id="btn-toggle-adblock" title="Dahili Reklam & İzleyici Engelleyici">
+              <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            </button>
+            <button type="button" class="hdr-btn" id="btn-split-view" title="Çift Sekme Bölünmüş Görünüm (Üst / Alt İki Uygulama)">
+              <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2.5"/><line x1="3" y1="12" x2="21" y2="12"/></svg>
+            </button>
+            <button type="button" class="hdr-btn" id="btn-edit-current" title="Siteyi & İkonu Özelleştir">
+              <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+            </button>
+            <button type="button" class="hdr-btn" id="btn-open-edge" title="Microsoft Edge'de Aç">
+              <svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            </button>
+            <div class="hdr-divider"></div>
+          </div>
+
+          <button type="button" class="hdr-btn" id="btn-pin-drawer" title="Sekmeyi Sabitle (Kapalıyken boş bir yere / sayfaya tıkladığınızda otomatik kapanır)">
+            <svg viewBox="0 0 24 24"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>
+          </button>
+          <button type="button" class="hdr-btn close-btn" id="btn-close-drawer" title="Paneli Daralt (Shift+Tık: Bellekten Uyku Moduna Al)">
+            <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+
+        <div id="loading-bar"></div>
+      </header>
+
+      <!-- Web Siteleri Sahnesi (Tekli + Çift Sekme Bölünmüş Görünüm / Split-View) -->
+      <main id="webviews-stage">
+        <div id="empty-stage-placeholder">
+          <div class="empty-hero-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+              <rect x="3" y="3" width="18" height="18" rx="4"/>
+              <line x1="15" y1="3" x2="15" y2="21"/>
+            </svg>
+          </div>
+          <h3>Zen Side</h3>
+          <p>Sağdaki kuleden bir sekme seçin, bir metni/görseli sekmenin üzerine sürükleyip bırakın veya <strong>+</strong> ile yeni site ekleyin.</p>
+          <button type="button" class="primary-btn" id="btn-empty-add">+ Yeni Site Ekle</button>
+        </div>
+
+        <!-- Çift Sekme (Split-View) Orta Ayırıcı & Alt Sekme Kontrol Çubuğu -->
+        <div id="split-divider-bar" class="hidden">
+          <div id="split-drag-handle" title="Üst ve alt sekme yüksekliğini ayarlamak için sürükleyin">
+            <span class="split-drag-pill"></span>
+          </div>
+          <div class="split-bar-content">
+            <div class="split-left">
+              <div id="split-site-badge" class="mini-badge split-mini-badge"></div>
+              <select id="split-site-select" class="split-select" title="Alt bölmedeki uygulamayı değiştir"></select>
+            </div>
+            <div class="split-actions">
+              <button type="button" class="hdr-btn compact-hdr-btn" id="btn-split-swap" title="Üst ve Alt Sekmeyi Yer Değiştir">
+                <svg viewBox="0 0 24 24"><polyline points="7 10 12 5 17 10"/><line x1="12" y1="5" x2="12" y2="19"/><polyline points="17 14 12 19 7 14"/></svg>
+              </button>
+              <button type="button" class="hdr-btn compact-hdr-btn" id="btn-split-reload" title="Alt Sekmeyi Yenile">
+                <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/></svg>
+              </button>
+              <button type="button" class="hdr-btn compact-hdr-btn" id="btn-split-open-edge" title="Alt Sekmeyi Edge'de Aç">
+                <svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+              </button>
+              <button type="button" class="hdr-btn compact-hdr-btn close-btn" id="btn-split-close" title="Bölünmüş Görünümü Kapat">
+                <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <!-- 0-RAM DAHİLİ YERLEŞİK MİNİ ARAÇLAR SAHNESİ (Notlar / Pano / Hesaplayıcı / Pomodoro) -->
+      <section id="tools-stage" class="hidden" aria-label="Zen Side Yerleşik Mini Araçlar">
+        <div class="tools-nav-tabs" role="tablist">
+          <button type="button" class="tool-tab-btn active" data-tool-tab="notes">📝 Notlar</button>
+          <button type="button" class="tool-tab-btn" data-tool-tab="clipboard">📋 Pano (30)</button>
+          <button type="button" class="tool-tab-btn" data-tool-tab="calc">🧮 Hesap & Kur</button>
+          <button type="button" class="tool-tab-btn" data-tool-tab="pomodoro">⏱️ Pomodoro</button>
+        </div>
+
+        <!-- 1) Hızlı Yapışkan Notlar -->
+        <div class="tool-pane" data-tool-pane="notes">
+          <div class="notes-top-row">
+            <div id="notes-tabs-bar" class="chips-strip flex-1"></div>
+            <button type="button" class="secondary-btn compact-btn" id="btn-note-add">+ Yeni Not</button>
+          </div>
+          <div class="notes-title-bar">
+            <input type="text" id="note-title-input" class="text-input compact-input" placeholder="Not başlığı..." maxlength="40" />
+            <button type="button" class="secondary-btn compact-btn" id="btn-note-copy" title="Tümünü Kopyala">Kopyala</button>
+            <button type="button" class="secondary-btn compact-btn" id="btn-note-export" title=".txt Olarak İndir">.txt</button>
+            <button type="button" class="danger-btn compact-btn" id="btn-note-delete" title="Bu Notu Sil">Sil</button>
+          </div>
+          <textarea
+            id="note-body-textarea"
+            class="note-textarea"
+            placeholder="Hızlı notlarınızı buraya yazın veya herhangi bir yerden metni 🧰 Mini Araçlar ikonuna sürükleyip bırakın... (Otomatik kaydedilir)"
+          ></textarea>
+          <div class="notes-footer-meta">
+            <span id="note-stats-label">0 kelime • 0 karakter</span>
+            <span class="muted">0 MB Ek RAM • Anında Kayıt</span>
+          </div>
+        </div>
+
+        <!-- 2) Pano Geçmişi -->
+        <div class="tool-pane hidden" data-tool-pane="clipboard">
+          <div class="clip-toolbar">
+            <input type="text" id="clip-search-input" class="text-input compact-input flex-1" placeholder="Kopyalanan metinlerde veya linklerde ara..." />
+            <button type="button" class="secondary-btn compact-btn" id="btn-clip-pause">⏸ Duraklat</button>
+            <button type="button" class="danger-btn compact-btn" id="btn-clip-clear">Temizle</button>
+          </div>
+          <div id="clip-history-list" class="clip-list"></div>
+        </div>
+
+        <!-- 3) Akıllı Hesaplayıcı + Birim & Canlı Döviz Çevirici -->
+        <div class="tool-pane hidden" data-tool-pane="calc">
+          <div class="calc-card">
+            <div class="calc-display-box">
+              <input
+                type="text"
+                id="calc-expr-input"
+                class="calc-input"
+                placeholder="örn: (1450 * 1.20) / 3"
+                autocomplete="off"
+              />
+              <div id="calc-live-result" class="calc-result" title="Sonucu kopyalamak için tıklayın">= 0</div>
+            </div>
+            <div id="calc-history-strip" class="chips-strip"></div>
+            <div id="calc-keypad" class="calc-grid"></div>
+          </div>
+
+          <div class="converter-card">
+            <div class="converter-header">
+              <span class="section-caption">BİRİM & CANLI DÖVİZ ÇEVİRİCİ</span>
+              <button type="button" class="mini-act-btn" id="btn-conv-refresh-rates" title="Canlı Döviz Kurlarını Güncelle">↻ Kurları Güncelle</button>
+            </div>
+            <div id="conv-cat-bar" class="chips-strip"></div>
+            <div class="conv-row">
+              <input type="number" id="conv-from-val" class="text-input compact-input" value="1" step="any" />
+              <select id="conv-from-unit" class="text-input compact-input"></select>
+            </div>
+            <div class="conv-swap-row">
+              <button type="button" class="secondary-btn compact-btn" id="btn-conv-swap">⇅ Birimleri Değiştir</button>
+            </div>
+            <div class="conv-row">
+              <input type="text" id="conv-to-val" class="text-input compact-input" readonly />
+              <select id="conv-to-unit" class="text-input compact-input"></select>
+            </div>
+            <div id="conv-rate-note" class="helper-note"></div>
+          </div>
+        </div>
+
+        <!-- 4) Pomodoro Odak Zamanlayıcı -->
+        <div class="tool-pane hidden" data-tool-pane="pomodoro">
+          <div class="pomo-card">
+            <div class="segmented full-seg">
+              <button type="button" class="seg-btn active" data-pomo-preset="work" data-pomo-mins="25">Odak (25 dk)</button>
+              <button type="button" class="seg-btn" data-pomo-preset="short" data-pomo-mins="5">Kısa Mola (5 dk)</button>
+              <button type="button" class="seg-btn" data-pomo-preset="long" data-pomo-mins="15">Uzun Mola (15 dk)</button>
+            </div>
+
+            <div class="pomo-ring-wrap">
+              <svg class="pomo-ring-svg" viewBox="0 0 128 128">
+                <circle class="pomo-ring-track" cx="64" cy="64" r="54" />
+                <circle id="pomo-ring-progress" class="pomo-ring-fill" cx="64" cy="64" r="54" />
+              </svg>
+              <div class="pomo-center-labels">
+                <div id="pomo-time-display" class="pomo-time">25:00</div>
+                <div id="pomo-mode-caption" class="pomo-caption">ODAK OTURUMU</div>
+              </div>
+            </div>
+
+            <div class="pomo-controls">
+              <button type="button" class="secondary-btn compact-btn" id="btn-pomo-minus" title="-1 Dakika">-1 dk</button>
+              <button type="button" class="primary-btn" id="btn-pomo-toggle">▶ Başlat</button>
+              <button type="button" class="secondary-btn" id="btn-pomo-reset">Sıfırla</button>
+              <button type="button" class="secondary-btn compact-btn" id="btn-pomo-plus" title="+1 Dakika">+1 dk</button>
+            </div>
+
+            <div class="pomo-stats-pill">
+              Tamamlanan Odak Oturumu: <strong id="pomo-sessions-count">0</strong>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- STÜDYO 1: SİTE EKLEME & İKON ÖZELLEŞTİRME PANELİ -->
+      <div id="studio-site-modal" class="studio-overlay hidden">
+        <div class="studio-header">
+          <h2 id="studio-modal-title">Yeni Site Ekle & Sekme Özelleştir</h2>
+          <button type="button" class="hdr-btn" id="btn-close-site-modal" title="Kapat">
+            <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+
+        <form id="site-editor-form" class="studio-body">
+          <!-- Canlı Önizleme Kartı -->
+          <div class="live-preview-card">
+            <div class="preview-strip-mock" title="İnce Kenar Şeridi Önizlemesi">
+              <div id="preview-tab-mock" class="rail-tab-preview">
+                <span id="preview-tab-accent" class="tab-accent-bar"></span>
+                <span id="preview-tab-text" class="tab-title-text">Whatsapp</span>
+              </div>
+            </div>
+            <div id="preview-icon-box" class="rail-icon-preview" title="Üst Çubuk İkonu"></div>
+            <div class="preview-meta">
+              <div class="preview-label">ZEN SIDE CANLI SEKME ÖNİZLEMESİ</div>
+              <div id="preview-title-text" class="preview-site-title">Whatsapp</div>
+              <div id="preview-url-text" class="preview-site-url">https://...</div>
+            </div>
+          </div>
+
+          <!-- Hızlı Doldurma Şablonları -->
+          <div class="field-group" id="quick-templates-section">
+            <label class="field-label">Hızlı Şablonlar <span class="muted">(İsteğe bağlı tek tıkla doldur)</span></label>
+            <div id="quick-templates-strip" class="chips-strip"></div>
+          </div>
+
+          <!-- URL, İsim ve Çalışma Alanı -->
+          <div class="field-group">
+            <label class="field-label" for="input-site-url">Web Sitesi Adresi (URL)</label>
+            <input
+              type="text"
+              id="input-site-url"
+              class="text-input"
+              placeholder="örn: web.whatsapp.com veya https://chatgpt.com"
+              required
+              autocomplete="off"
+              spellcheck="false"
+            />
+          </div>
+
+          <div class="two-col-fields">
+            <div class="field-group">
+              <label class="field-label" for="input-site-name">Görünen Ad</label>
+              <input
+                type="text"
+                id="input-site-name"
+                class="text-input"
+                placeholder="örn: WhatsApp, Gemini"
+                maxlength="40"
+                required
+                autocomplete="off"
+              />
+            </div>
+
+            <div class="field-group">
+              <label class="field-label" for="input-site-workspace">Çalışma Alanı (Profil)</label>
+              <select id="input-site-workspace" class="text-input">
+                <option value="general">🌐 Genel</option>
+                <option value="ai">✨ Yapay Zeka</option>
+                <option value="work">💼 İş</option>
+                <option value="personal">🏠 Kişisel</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- 4 Sekmeli İkon Özelleştirici -->
+          <div class="field-group">
+            <label class="field-label">İkon Tasarımı</label>
+            <div class="icon-mode-tabs" role="tablist">
+              <button type="button" class="tab-btn active" data-icon-tab="favicon">Site İkonu</button>
+              <button type="button" class="tab-btn" data-icon-tab="preset">İkon Seç</button>
+              <button type="button" class="tab-btn" data-icon-tab="monogram">Harf / Emoji</button>
+              <button type="button" class="tab-btn" data-icon-tab="custom">Özel Görsel</button>
+            </div>
+
+            <div class="icon-tab-pane" id="pane-favicon">
+              <p class="helper-note">
+                Sitenin orijinal yüksek çözünürlüklü ikonu (Favicon) otomatik olarak algılanır ve güncellenir.
+              </p>
+            </div>
+
+            <div class="icon-tab-pane hidden" id="pane-preset">
+              <div id="preset-icons-grid" class="icons-grid"></div>
+            </div>
+
+            <div class="icon-tab-pane hidden" id="pane-monogram">
+              <div class="monogram-input-row">
+                <input
+                  type="text"
+                  id="input-monogram-text"
+                  class="text-input"
+                  placeholder="1-3 Harf veya Emoji (örn: WP, AI, 💬)"
+                  maxlength="4"
+                />
+              </div>
+              <div id="emoji-picker-grid" class="emoji-grid"></div>
+            </div>
+
+            <div class="icon-tab-pane hidden" id="pane-custom">
+              <div class="custom-upload-row">
+                <button type="button" class="secondary-btn full-width" id="btn-upload-icon">
+                  📁 Bilgisayardan İkon / Görsel Seç (.png, .ico, .svg, .webp)
+                </button>
+              </div>
+              <div class="or-divider"><span>veya görsel bağlantısı yapıştırın</span></div>
+              <input
+                type="text"
+                id="input-custom-icon-url"
+                class="text-input"
+                placeholder="https://ornek.com/ikon.png"
+                autocomplete="off"
+                spellcheck="false"
+              />
+            </div>
+
+            <div id="bg-picker-container" class="bg-picker-section">
+              <div class="bg-picker-header">
+                <span>Sekme Çizgi Rengi & İkon Teması</span>
+                <label class="color-wheel-label" title="Özel Renk Seç">
+                  <input type="color" id="input-custom-bg-color" value="#0078d4" />
+                  <span>Özel Renk</span>
+                </label>
+              </div>
+              <div id="gradient-swatches" class="swatches-row"></div>
+            </div>
+          </div>
+
+          <!-- Gelişmiş Görünüm Seçenekleri -->
+          <div class="field-group advanced-box">
+            <label class="toggle-row">
+              <div>
+                <div class="toggle-title">Mobil Uyumlu Görünüm</div>
+                <div class="toggle-desc">Siteleri dar kenar çubuğuna tam sığacak mobil arayüzle açar</div>
+              </div>
+              <input type="checkbox" id="input-mobile-mode" checked />
+            </label>
+
+            <label class="toggle-row">
+              <div>
+                <div class="toggle-title">Bildirimler İçin Uyanık Tut (Otomatik Uyutma)</div>
+                <div class="toggle-desc">WhatsApp gibi mesajlaşma sitelerinin arka planda canlı bildirim alması için uyku modundan muaf tutar</div>
+              </div>
+              <input type="checkbox" id="input-keep-awake" />
+            </label>
+
+            <label class="toggle-row">
+              <div>
+                <div class="toggle-title">Bağımsız Oturum (İkinci Hesap)</div>
+                <div class="toggle-desc">Bu kısayol için ayrı çerez/oturum alanı oluşturur</div>
+              </div>
+              <input type="checkbox" id="input-isolated-session" />
+            </label>
+
+            <div class="zoom-row">
+              <div class="zoom-header">
+                <span class="toggle-title">Sayfa Ölçeği (Zoom)</span>
+                <span id="zoom-value-label" class="badge-pill">%100</span>
+              </div>
+              <input type="range" id="input-site-zoom" min="70" max="130" step="5" value="100" />
+            </div>
+          </div>
+
+          <div class="studio-footer">
+            <button type="button" class="danger-btn hidden" id="btn-delete-site">Kaldır</button>
+            <div class="footer-right">
+              <button type="button" class="secondary-btn" id="btn-cancel-site">İptal</button>
+              <button type="submit" class="primary-btn" id="btn-save-site">Kaydet</button>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <!-- STÜDYO 2: ZEN SIDE AYARLARI PANELİ -->
+      <div id="studio-settings-modal" class="studio-overlay hidden">
+        <div class="studio-header">
+          <h2>Zen Side Ayarları</h2>
+          <button type="button" class="hdr-btn" id="btn-close-settings-modal" title="Kapat">
+            <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+
+        <div class="studio-body">
+          <!-- ÇALIŞMA ALANLARI & ÇOKLU MONİTÖR -->
+          <div class="settings-section">
+            <div class="section-caption">ÇALIŞMA ALANLARI (PROFİLLER) & ÇOKLU MONİTÖR</div>
+
+            <div class="field-group">
+              <label class="field-label">Aktif Çalışma Alanı Filtresi</label>
+              <div id="workspace-filter-bar" class="chips-strip"></div>
+            </div>
+
+            <div class="field-group compact-top">
+              <label class="field-label" for="set-target-display">Kenar Çubuğunun Sabitleneceği Monitör</label>
+              <select id="set-target-display" class="text-input"></select>
+            </div>
+          </div>
+
+          <!-- DAHİLİ REKLAM & İZLEYİCİ ENGELLEYİCİ -->
+          <div class="settings-section">
+            <div class="section-caption">DAHİLİ REKLAM VE İZLEYİCİ ENGELLEYİCİ (ADBLOCK)</div>
+            <label class="toggle-row">
+              <div>
+                <div class="toggle-title">Ağ Katmanı Reklam & İzleyici Engelleyici</div>
+                <div class="toggle-desc">Haber, sözlük, arama ve video sitelerindeki reklam/izleyici betiklerini engeller</div>
+              </div>
+              <input type="checkbox" id="set-adblock-enabled" checked />
+            </label>
+            <div class="sleep-memory-row">
+              <span id="adblock-stats-badge" class="sleep-status-text">🛡️ Engellenen reklam & izleyici: 0</span>
+              <span class="badge-pill">0 Ek RAM</span>
+            </div>
+          </div>
+
+          <!-- WINDOWS MICA & iOS BUZLU CAM EFEKTLERİ -->
+          <div class="settings-section">
+            <div class="section-caption">WINDOWS 11 MICA & iOS CAM EFEKTİ</div>
+
+            <div class="segmented-control-row">
+              <span>Cam Motoru</span>
+              <div class="segmented">
+                <button type="button" class="seg-btn active" data-material-choice="acrylic">iOS Cam</button>
+                <button type="button" class="seg-btn" data-material-choice="mica">Win11 Mica</button>
+                <button type="button" class="seg-btn" data-material-choice="tabbed">Mica Alt</button>
+                <button type="button" class="seg-btn" data-material-choice="none">Mat</button>
+              </div>
+            </div>
+
+            <div class="field-group compact-top">
+              <label class="field-label">iOS Cam & Mica Renk Tonu</label>
+              <div id="glass-tint-grid" class="glass-tints-grid"></div>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <div class="section-caption">SEKME GÖRÜNÜMÜ, GENİŞLİK VE MASAÜSTÜ HİZALAMA</div>
+
+            <div class="segmented-control-row">
+              <span>Sekme Görünümü</span>
+              <div class="segmented">
+                <button type="button" class="seg-btn active" data-display-choice="text">Sadece İsim</button>
+                <button type="button" class="seg-btn" data-display-choice="icon">Sadece Simge</button>
+                <button type="button" class="seg-btn" data-display-choice="both">Simge + İsim</button>
+              </div>
+            </div>
+
+            <div class="zoom-row">
+              <div class="zoom-header">
+                <span class="toggle-title">Açılır Sekme Genişliği <span class="muted">(Hafızada tutulur, kenardan sürüklenebilir)</span></span>
+                <span id="panel-width-label" class="badge-pill">420 px</span>
+              </div>
+              <input type="range" id="set-panel-width" min="280" max="1400" step="4" value="420" />
+            </div>
+
+            <div class="zoom-row">
+              <div class="zoom-header">
+                <span class="toggle-title">Kapalı Şerit Genişliği <span class="muted">(Min: 22px, kenardan sürüklenebilir)</span></span>
+                <span id="rail-width-label" class="badge-pill">22 px</span>
+              </div>
+              <input type="range" id="set-rail-width" min="22" max="160" step="2" value="22" />
+            </div>
+
+            <div class="segmented-control-row">
+              <span>Ekran Kenarı</span>
+              <div class="segmented">
+                <button type="button" class="seg-btn" data-edge-choice="left">Sol Kenar</button>
+                <button type="button" class="seg-btn active" data-edge-choice="right">Sağ Kenar</button>
+              </div>
+            </div>
+
+            <label class="toggle-row" id="row-dock-reserve">
+              <div>
+                <div class="toggle-title">Tam Ekran Uygulamalar Yanında Kalsın</div>
+                <div class="toggle-desc">Uygulamaları tam ekran büyüttüğünüzde kenar çubuğunun altında kalmaz, yanına hizalanır</div>
+              </div>
+              <input type="checkbox" id="set-dock-reserve" checked />
+            </label>
+
+            <label class="toggle-row">
+              <div>
+                <div class="toggle-title">Boş Bir Yere / Sayfaya Tıklayınca Otomatik Kapat</div>
+                <div class="toggle-desc">Açılır sekme açıkken ekranın boş bir yerine veya başka bir sayfaya tıkladığınızda sekmeyi otomatik kapatır</div>
+              </div>
+              <input type="checkbox" id="set-autoclose-outside" checked />
+            </label>
+
+            <label class="toggle-row">
+              <div>
+                <div class="toggle-title">Otomatik Kenara Gizle (Tam Kenar Sensörlü)</div>
+                <div class="toggle-desc">Fare uzaklaştığında gizlenir; fareyi ekranın bulunduğu kenar boyunca yaklaştırdığınızda otomatik açılır</div>
+              </div>
+              <input type="checkbox" id="set-autohide" />
+            </label>
+
+            <label class="toggle-row">
+              <div>
+                <div class="toggle-title">Dış Bağlantıları Microsoft Edge'de Aç</div>
+                <div class="toggle-desc">Yeni sekme bağlantılarını doğrudan Edge tarayıcısına gönderir</div>
+              </div>
+              <input type="checkbox" id="set-open-in-edge" checked />
+            </label>
+
+            <label class="toggle-row">
+              <div>
+                <div class="toggle-title">Görev Çubuğundan Gizle</div>
+                <div class="toggle-desc">Alt görev çubuğunda yer kaplamaz, sistem tepsisinden çalışır</div>
+              </div>
+              <input type="checkbox" id="set-skip-taskbar" />
+            </label>
+
+            <label class="toggle-row">
+              <div>
+                <div class="toggle-title">Windows Açılışında Otomatik Başlat</div>
+                <div class="toggle-desc">Bilgisayar açıldığında Zen Side hazır bekler</div>
+              </div>
+              <input type="checkbox" id="set-launch-startup" />
+            </label>
+          </div>
+
+          <div class="settings-section">
+            <div class="section-caption">OTOMATİK UYKU MODU & CANLI BİLDİRİMLER</div>
+
+            <div class="segmented-control-row wrap-row">
+              <span>Hareketsiz Sekmeleri Uyut</span>
+              <div class="segmented">
+                <button type="button" class="seg-btn" data-sleep-choice="0">Kapalı</button>
+                <button type="button" class="seg-btn" data-sleep-choice="5">5 dk</button>
+                <button type="button" class="seg-btn active" data-sleep-choice="15">15 dk</button>
+                <button type="button" class="seg-btn" data-sleep-choice="30">30 dk</button>
+                <button type="button" class="seg-btn" data-sleep-choice="60">60 dk</button>
+              </div>
+            </div>
+
+            <p class="helper-note">
+              Ses çalan sekmeler ve <strong>WhatsApp</strong> gibi <em>"Bildirimler İçin Uyanık Tut"</em> işaretli sekmeler bildirim kaçırmamak için uyutulmaz; diğer sekmeler RAM boşaltır ve tıkladığınızda kaldığı sayfadan uyanır.
+            </p>
+
+            <div class="sleep-memory-row">
+              <span id="sleep-status-label" class="sleep-status-text">Bellekte aktif: 0 sekme</span>
+              <button type="button" class="secondary-btn compact-btn" id="btn-sleep-now">Arka Planı Şimdi Uyut</button>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <div class="section-caption">TEMA VE GLOBAL KISAYOLLAR</div>
+
+            <div class="segmented-control-row">
+              <span>Tema</span>
+              <div class="segmented">
+                <button type="button" class="seg-btn active" data-theme-choice="dark">Koyu</button>
+                <button type="button" class="seg-btn" data-theme-choice="light">Açık</button>
+                <button type="button" class="seg-btn" data-theme-choice="system">Sistem</button>
+              </div>
+            </div>
+
+            <div class="field-group compact-top">
+              <label class="field-label" for="set-hotkey">Global Açma / Gizleme Kısayolu</label>
+              <div class="hotkey-row">
+                <input
+                  type="text"
+                  id="set-hotkey"
+                  class="text-input"
+                  value="Alt+S"
+                  placeholder="örn: Alt+S"
+                />
+                <button type="button" class="secondary-btn" id="btn-apply-hotkey">Uygula</button>
+              </div>
+            </div>
+
+            <div class="field-group compact-top">
+              <label class="field-label" for="set-snip-hotkey">Global Ekran Kırp & Yapay Zekaya Sor Kısayolu</label>
+              <div class="hotkey-row">
+                <input
+                  type="text"
+                  id="set-snip-hotkey"
+                  class="text-input"
+                  value="Alt+Shift+S"
+                  placeholder="örn: Alt+Shift+S"
+                />
+                <button type="button" class="secondary-btn" id="btn-apply-snip-hotkey">Uygula</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <div class="section-caption">YEDEKLEME VE OTURUM</div>
+            <div class="btn-grid-2">
+              <button type="button" class="secondary-btn" id="btn-export-json">Yedeği Dışa Aktar</button>
+              <button type="button" class="secondary-btn" id="btn-import-json">Yedeği İçe Aktar</button>
+            </div>
+            <button type="button" class="secondary-btn full-width mt-8" id="btn-clear-cookies">
+              Paylaşılan Oturum Çerezlerini & Önbelleği Temizle
+            </button>
+            <button type="button" class="danger-btn full-width mt-8" id="btn-quit-app">
+              Zen Side'ı Tamamen Kapat (Çıkış)
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bildirim Toast -->
+      <div id="toast-banner" class="toast hidden"></div>
+    </section>
+
+    <!-- İNCE DİKEY / YATAY UYARLANABİLİR SEKME ŞERİDİ (Min 22px -> 160px) -->
+    <aside id="sidebar-rail" aria-label="Zen Side İnce Sekme Şeridi">
+      <div id="rail-resize-grip" title="Şerit genişliğini büyütmek/küçültmek için sürükleyin (Min: 22px, Çift Tık: Sıfırla)"></div>
+
+      <!-- Üst Aç/Kapat & Çalışma Alanı Seçici -->
+      <div class="rail-top">
+        <button type="button" id="btn-rail-brand" class="rail-brand-btn" title="Zen Side Aç / Daralt (Alt+S)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
+        </button>
+        <button type="button" id="btn-rail-workspace" class="rail-ws-btn" title="Çalışma Alanı: Tümü (Sol Tık: Değiştir | Sağ Tık: Liste)">
+          <span id="rail-ws-badge">✦</span>
+        </button>
+        <div class="rail-divider"></div>
+      </div>
+
+      <!-- Sürükle-Bırak Destekli Sekme Kulesi -->
+      <div id="app-tower" class="rail-apps-list"></div>
+
+      <!-- Yeni Site Ekle (+) -->
+      <div class="rail-add-wrap">
+        <button type="button" id="btn-rail-add" class="rail-action-btn add-accent" title="Yeni Site Ekle (+) — Bağlantı sürükleyip bırakabilirsiniz">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+      </div>
+
+      <!-- Alt Mikro Kontroller -->
+      <div class="rail-bottom">
+        <div class="rail-divider"></div>
+        <button type="button" id="btn-rail-snip" class="rail-util-btn" title="Ekran Görüntüsü Kırp & Yapay Zekaya / WhatsApp'a Gönder (Alt+Shift+S)">
+          <svg viewBox="0 0 24 24"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg>
+        </button>
+        <button type="button" id="btn-rail-tools" class="rail-util-btn" title="0-RAM Yerleşik Mini Araçlar (Notlar • Pano Geçmişi • Hesap & Kur • Pomodoro)">
+          <svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
+        </button>
+        <button type="button" id="btn-rail-display" class="rail-util-btn" title="Sekme Görünümü: Sadece İsim / Sadece Simge / Simge + İsim">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+        </button>
+        <button type="button" id="btn-rail-glass" class="rail-util-btn" title="Mica / iOS Cam Rengini Değiştir">
+          <svg viewBox="0 0 24 24"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
+        </button>
+        <button type="button" id="btn-rail-dock" class="rail-util-btn" title="Tam Ekran Uygulamalar Yanında Kalsın">
+          <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M16 4v16"/></svg>
+        </button>
+        <button type="button" id="btn-rail-autohide" class="rail-util-btn" title="Otomatik Kenara Gizle">
+          <svg viewBox="0 0 24 24"><polyline points="13 17 18 12 13 7"/><polyline points="6 17 11 12 6 7"/></svg>
+        </button>
+        <button type="button" id="btn-rail-settings" class="rail-util-btn" title="Zen Side Ayarları">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </button>
+      </div>
+    </aside>
+  </div>
+
+  <script src="icons-data.js"></script>
+  <script src="tools-widget.js"></script>
+  <script src="renderer.js"></script>
+</body>
+</html>
