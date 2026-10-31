@@ -1433,6 +1433,14 @@
     wv.setAttribute('src', restoreUrl);
     wv.dataset.siteId = site.id;
 
+    wv.addEventListener('will-navigate', (e) => {
+      if (/accounts\.google\.com|google\.[a-z.]+\/signin/i.test(e.url || '')) {
+        try {
+          wv.setUserAgent(userAgents.desktopChrome || userAgents.desktop);
+        } catch (_e) {}
+      }
+    });
+
     sleepingSitesSet.delete(site.id);
     readySet.delete(site.id);
     lastActiveMap.set(site.id, Date.now());

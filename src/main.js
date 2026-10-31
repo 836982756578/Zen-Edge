@@ -22,6 +22,8 @@ const { spawn } = require('child_process');
 // Otomatik gizli (ekran dışı / saydam) moddayken WhatsApp vb. arka plan sekmelerinin canlı bildirim almaya devam etmesi için
 app.commandLine.appendSwitch('disable-renderer-backgrounding');
 app.commandLine.appendSwitch('disable-background-timer-throttling');
+// Google ve diğer modern OAuth sağlayıcılarının "Bu tarayıcı veya uygulama güvenli olmayabilir" (Botguard) engeline takılmaması için
+app.commandLine.appendSwitch('disable-blink-features', 'AutomationControlled');
 
 /**
  * Eski "zen-side" veya "edge-kenar-cubugu" kullanıcı verilerini (ayarlar, sabitli klasörler/sekmeler,
@@ -126,9 +128,14 @@ let uiWindowState = {
   isDragging: false
 };
 
-const chromeVer = process.versions.chrome || '134.0.0.0';
+const chromeVer = process.versions.chrome || '134.0.6998.35';
+const majorVer = chromeVer.split('.')[0] || '134';
+const DESKTOP_CHROME_UA = `Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${chromeVer} Safari/537.36`;
 const DESKTOP_EDGE_UA = `Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${chromeVer} Safari/537.36 Edg/${chromeVer}`;
 const MOBILE_EDGE_UA = `Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${chromeVer} Mobile Safari/537.36 EdgA/${chromeVer}`;
+
+// Electron varsayılan UA dizesinin "Electron/..." içermesini önler
+app.userAgentFallback = DESKTOP_CHROME_UA;
 
 // Tek örnek kilidi (uygulama iki kez açılırsa mevcut Zen Edge penceresini öne getirir)
 const gotLock = app.requestSingleInstanceLock();
@@ -323,7 +330,7 @@ function openUrlExternal(url, preferEdge = true) {
 }
 
 /**
- * Oturumları (Session) yapılandırır: temiz Edge User-Agent, izinler ve Dahili Reklam Engelleyici
+ * Oturumları (Session) yapılandırır: temiz Chrome/Edge User-Agent, izinler ve Dahili Reklam Engelleyici
  */
 const configuredPartitions = new Set();
 function configurePartitionSession(partitionName) {
@@ -331,15 +338,22 @@ function configurePartitionSession(partitionName) {
   configuredPartitions.add(partitionName);
 
   const sess = session.fromPartition(partitionName);
-  sess.setUserAgent(DESKTOP_EDGE_UA);
+  sess.setUserAgent(DESKTOP_CHROME_UA);
 
-  const majorVer = chromeVer.split('.')[0] || '134';
   sess.webRequest.onBeforeSendHeaders((details, callback) => {
-    const headers = details.requestHeaders;
-    if (headers['User-Agent'] && headers['User-Agent'].includes('Electron')) {
-      headers['User-Agent'] = DESKTOP_EDGE_UA;
+    const headers = details.requestHeaders || {};
+    const uaKey = Object.keys(headers).find(k => k.toLowerCase() === 'user-agent') || 'User-Agent';
+    const currentUa = headers[uaKey] || '';
+    const isGoogleAuth = /accounts\.google\.com|google\.[a-z.]+\/signin|oauth|google\.com\/accounts/i.test(details.url);
+
+    if (isGoogleAuth || /Electron|ZenEdge|EdgA/i.test(currentUa)) {
+      headers[uaKey] = DESKTOP_CHROME_UA;
+      headers['sec-ch-ua'] = `"Google Chrome";v="${majorVer}", "Chromium";v="${majorVer}", "Not:A-Brand";v="24"`;
+      headers['sec-ch-ua-mobile'] = '?0';
+      headers['sec-ch-ua-platform'] = '"Windows"';
+    } else if (!headers['sec-ch-ua']) {
+      headers['sec-ch-ua'] = `"Google Chrome";v="${majorVer}", "Chromium";v="${majorVer}", "Not:A-Brand";v="24"`;
     }
-    headers['sec-ch-ua'] = `"Microsoft Edge";v="${majorVer}", "Chromium";v="${majorVer}", "Not:A-Brand";v="24"`;
     callback({ requestHeaders: headers });
   });
 
@@ -1247,7 +1261,8 @@ app.on('web-contents-created', (_event, contents) => {
           title: 'Giriş Yap - Zen Edge',
           webPreferences: {
             nodeIntegration: false,
-            contextIsolation: true
+            contextIsolation: true,
+            userAgent: DESKTOP_CHROME_UA
           }
         }
       };
@@ -1258,6 +1273,9 @@ app.on('web-contents-created', (_event, contents) => {
   });
 
   contents.on('did-create-window', (childWin) => {
+    try {
+      childWin.webContents.setUserAgent(DESKTOP_CHROME_UA);
+    } catch (_e) {}
     childWin.on('closed', () => {
       setTimeout(() => {
         ignoreBlurCount = Math.max(0, ignoreBlurCount - 1);
@@ -1392,7 +1410,9 @@ ipcMain.handle('sidebar:get-init-data', () => {
   return {
     config,
     userAgents: {
-      desktop: DESKTOP_EDGE_UA,
+      desktop: DESKTOP_CHROME_UA,
+      desktopChrome: DESKTOP_CHROME_UA,
+      desktopEdge: DESKTOP_EDGE_UA,
       mobile: MOBILE_EDGE_UA
     },
     appBarSupported: appBar.isSupported(),

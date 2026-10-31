@@ -49,7 +49,7 @@ const DEFAULT_WIDGETS = {
 };
 
 const DEFAULT_CONFIG = {
-  configVersion: 7,
+  configVersion: 8,
   settings: {
     edge: 'right',            // 'right' | 'left'
     displayId: null,          // Hedef monitör ID (null = Ana Ekran)
@@ -102,7 +102,7 @@ const DEFAULT_CONFIG = {
       iconValue: '',
       iconBg: 'linear-gradient(135deg, #0078d4, #00b7c3)',
       iconColor: '#ffffff',
-      mobileMode: true,
+      mobileMode: false,
       keepAwake: false,
       zoom: 1.0,
       customWidth: null,
@@ -117,7 +117,7 @@ const DEFAULT_CONFIG = {
       iconValue: 'translate',
       iconBg: 'linear-gradient(135deg, #4f46e5, #7c3aed)',
       iconColor: '#ffffff',
-      mobileMode: true,
+      mobileMode: false,
       keepAwake: false,
       zoom: 1.0,
       customWidth: null,
@@ -132,7 +132,7 @@ const DEFAULT_CONFIG = {
       iconValue: '',
       iconBg: 'linear-gradient(135deg, #6366f1, #a855f7)',
       iconColor: '#ffffff',
-      mobileMode: true,
+      mobileMode: false,
       keepAwake: false,
       zoom: 1.0,
       customWidth: null,
@@ -197,6 +197,16 @@ class ConfigStore {
           }
         }
 
+        if ((parsed.configVersion || 1) < 8) {
+          // Google, Gemini, Gmail gibi servislerde Botguard güvenlik engeline takılmamak için masaüstü moduna geçir
+          sites = sites.map((s) => {
+            if (/google\.|gemini\.|gmail\./i.test(s.url || '')) {
+              return { ...s, mobileMode: false };
+            }
+            return s;
+          });
+        }
+
         sites = sites.map((s) => ({
           ...s,
           type: s.type === 'folder' ? 'folder' : 'site',
@@ -219,7 +229,7 @@ class ConfigStore {
         }
 
         this.data = {
-          configVersion: 7,
+          configVersion: 8,
           settings: mergedSettings,
           workspaces: Array.isArray(parsed.workspaces) && parsed.workspaces.length >= 2
             ? parsed.workspaces
